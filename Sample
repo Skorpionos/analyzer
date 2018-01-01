@@ -1,0 +1,14 @@
+void saveToFile(const char* fileName, uint8_t buffer[], size_t size)
+{
+    std::fstream file(fileName, std::ios::binary | std::ios::out);
+
+    for(size_t i = 0; i < size; i++)
+    {
+        file.write(reinterpret_cast<char*>(&buffer[i]), 1);
+    }
+    file.close();
+}
+
+void readFromFile(const char* fileName, uint8_t buffer[], size_t size)
+{
+}
