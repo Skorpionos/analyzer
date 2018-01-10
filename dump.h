@@ -39,7 +39,7 @@ struct DumperSettings
 
 struct Line
 {
-    std::string offset;
+//    std::string offset;
     std::string dump;
     std::string ascii;
 };
@@ -53,7 +53,7 @@ struct Ctx
 class Dumper
 {
 public:
-    Dumper(DumperSettings settings);
+    explicit Dumper(DumperSettings settings);
 
     void Print(void* bufferVoid, size_t length);
     void Print2(void* bufferVoid, size_t length);
@@ -73,7 +73,7 @@ private:
 private:
     DumperSettings m_settings;
     Ctx m_ctx;
-    void PrintSeparator() const;
+
 };
 
 }; // namespace hexdump

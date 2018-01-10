@@ -11,6 +11,8 @@ set(SOURCE_FILES
         dump.cpp
         file_operations.h
         file_operations.cpp
+        utilities.h
+        utilities.cpp
         /usr/include/boost/program_options/options_description.hpp
         read_options.cpp read_options.h)
 add_executable(analyzer ${SOURCE_FILES})

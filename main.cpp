@@ -1,6 +1,7 @@
 #include "dump.h"
 #include "file_operations.h"
 #include "read_options.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -19,8 +20,12 @@ int main(int argc, char* argv[])
     ReadBuffer(fileName, &buffer, size);
 
     hexdump::Dumper dumper(formatSettings);
-//    dumper.SetSettings(formatSettings);
+
+
+    PrintSeparator();
     dumper.Print(buffer, size);
+    PrintSeparator();
+    cout << "length=" << size << "\n";
 
     delete[] buffer;
     return 0;
