@@ -7,7 +7,7 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-    hexdump::DumperSettings formatSettings;
+    dump::DumperSettings formatSettings;
 
     std::string fileName;
 
@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
 
     ReadBuffer(fileName, &buffer, size);
 
-    hexdump::Dumper dumper(formatSettings);
+    dump::Dumper dumper(formatSettings);
 
 
     PrintSeparator();
