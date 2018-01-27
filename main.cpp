@@ -7,27 +7,25 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-    dump::DumperSettings formatSettings;
+    dump::DumperSettings settings;
 
     std::string fileName;
 
-    if (!ReadOptions(argc, argv, fileName, formatSettings))
+    if (!ReadOptions(argc, argv, fileName, settings))
         return 0;
 
     char* buffer = nullptr;
+
     size_t size = 0;
 
     ReadBuffer(fileName, &buffer, size);
 
-    dump::Dumper dumper(formatSettings);
+    dump::Dumper dumper(settings);
 
-
-    PrintSeparator();
-    dumper.Print(buffer, size);
-    PrintSeparator();
-    cout << "length=" << size << "\n";
+    dumper.Generate(buffer, size);
 
     delete[] buffer;
+
     return 0;
 }
 

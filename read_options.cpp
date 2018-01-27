@@ -7,20 +7,32 @@ bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSetti
     std::string addressType;
     desc.add_options()
             ("help", "help")
-            ("groups", boost::program_options::value(&settings.columnCount), "number of groups")
-            ("space", boost::program_options::value(&settings.isSpaceBetweenBytes), "set space between groups")
+            ("begin", boost::program_options::value(&settings.begin), "start from offset")
+            ("size", boost::program_options::value(&settings.size), "count of bytes to display")
+            ("end", boost::program_options::value(&settings.end), "last offset to display")
+            ("group", boost::program_options::value(&settings.columnCount), "number of groups")
+            ("bytes", boost::program_options::value(&settings.bytesInGroup), "number of bytes in one group")
             ("offset", boost::program_options::value(&addressType), "offset format (hex, dec, both, none)")
+            ("detailed", boost::program_options::value(&settings.detailedOffset), "detailed format for offset")
             ("dump", boost::program_options::value(&settings.isShowDump), "show hexadecimal representation")
+            ("asc", boost::program_options::value(&settings.isShowAscii), "show ascii representation")
+            ("space", boost::program_options::value(&settings.isSpaceBetweenAsciiBytes), "set space between ascii groups")
+            ("spacedump", boost::program_options::value(&settings.isSpaceBetweenDumpBytes), "set space between dump groups")
             ("char", boost::program_options::value(&settings.placeHolder), "placeholder for non visible symbols")
-            ("widechar", boost::program_options::value(&settings.widePlaceHolder), "placeholder for non invisible in wide char")
-            ("array", boost::program_options::value(&settings.cArray), "generate c array")
-            ("only", boost::program_options::value(&settings.only), "print only visible symbols")
-            ("ladder", boost::program_options::value(&settings.ladder), "wrap dump for words")
-            ("single", boost::program_options::value(&settings.single), "delete first non visible symbols in every group")
-            ("compress", boost::program_options::value(&settings.compress), "replace following non visible symbols to one")
-            ("newline", boost::program_options::value(&settings.newline), "visible word starts with new line")
-            ("length", boost::program_options::value(&settings.length), "min symbols in word for display")
-            ("wordwide", boost::program_options::value(&settings.wordwide), "combine wide-char word")
+            ("zero", boost::program_options::value(&settings.zeroPlaceHolder), "placeholder for zero")
+            ("wide", boost::program_options::value(&settings.useWideChar), "combine wide-char word")
+            ("widechar", boost::program_options::value(&settings.widePlaceHolder), "placeholder for non invisible in symbols for wide-char words")
+            ("array", boost::program_options::value(&settings.IsCArray), "generate c array")
+            ("ladder", boost::program_options::value(&settings.ladder), "use intend for separate words")
+            ("newline", boost::program_options::value(&settings.newLine), "every visible word starts with new line")
+            ("fromstart", boost::program_options::value(&settings.useRelativeAddress), "begin without indent")
+            ("key", boost::program_options::value(&settings.key), "key (string value) for found")
+            ("hkey", boost::program_options::value(&settings.hkey), "key (hex values) for found")
+            ("from", boost::program_options::value(&settings.from), "from key (hex value)")
+            ("till", boost::program_options::value(&settings.till), "till key (hex value)")
+//            ("length", boost::program_options::value(&settings.length), "min symbols in word for display")
+//            ("single", boost::program_options::value(&settings.single), "delete first non visible symbols in every group")
+//            ("compress", boost::program_options::value(&settings.compress), "replace following non visible symbols to one")
             ;
     try
     {
@@ -36,8 +48,26 @@ bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSetti
             std::cout << desc << "\n";
             return false;
         }
+        settings.isShowOffset = settings.offset != dump::Offset::None;
+
+        if (settings.size !=0  && settings.end == 0)
+            settings.end = settings.begin + settings.size - 1;
+
+//        if (!vm.count("zero") )
+//            settings.zeroPlaceHolder = settings.placeHolder;
+
+        if (settings.IsCArray)
+        {
+//            settings.isShowAscii = false;
+            // settings.isShowOffset = false;
+        }
+
+        if (settings.newLine || settings.ladder)
+            settings.isSpaceBetweenDumpBytes = false;
+
         fileName = argv[1];
-        settings.bytesInLine = 8 * settings.columnCount;
+
+        settings.bytesInLine = settings.columnCount * settings.bytesInGroup;
     }
 
     catch (...)

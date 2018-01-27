@@ -17,7 +17,7 @@ void Dumper::Print2(void* bufferVoid, size_t length)
 {
     //    utilities::PrintSeparator();
 
-    if (m_settings.cArray)
+    if (m_settings.IsCArray)
     {
         PrintArray(bufferVoid, length);
         return;
@@ -71,7 +71,7 @@ void Dumper::Print2(void* bufferVoid, size_t length)
             cout << " ";
             for (size_t j = i - (columnSize - 1); j <= i; ++j)
             {
-                if (m_settings.isSpaceBetweenBytes && j % 8 == 0)
+                if (m_settings.isSpaceBetweenAsciiBytes && j % 8 == 0)
                     cout << " "; // new column
 
                 if (j >= length)
@@ -83,7 +83,7 @@ void Dumper::Print2(void* bufferVoid, size_t length)
                     isCurrentVisible = isprint(buffer[j]);
                     if (isCurrentVisible)
                     {
-                        if (currentWordLength == 0 && j != 0 && m_settings.newline)
+                        if (currentWordLength == 0 && j != 0 && m_settings.newLine)
                         {
                             cout << endl;
                             size_t spacesLength = OffsetLength() + HexDumpLength();
@@ -98,7 +98,7 @@ void Dumper::Print2(void* bufferVoid, size_t length)
                     }
                     else
                     {
-                        if (j + 1 < length && isPreviousVisible && isprint(buffer[j + 1]) && m_settings.wordwide)
+                        if (j + 1 < length && isPreviousVisible && isprint(buffer[j + 1]) && m_settings.useWideChar)
                         {
                             cout << m_settings.widePlaceHolder;
                         }
@@ -129,7 +129,7 @@ void Dumper::PrintOnlyVisible(void* bufferVoid, size_t length)
         if (isprint(buffer[i]))
         {
             cout << buffer[i];
-            if (isFirstVisible && m_settings.newline)
+            if (isFirstVisible && m_settings.newLine)
             {
                 isFirstVisible = false;
                 cout << endl;
@@ -155,7 +155,7 @@ void Dumper::PrintCompressInvisible(void* bufferVoid, size_t length)
     {
         if (!isprint(buffer[i]))
         {
-            if (m_settings.newline)
+            if (m_settings.newLine)
                 cout << endl;
             else
                 cout << " ";
@@ -210,7 +210,7 @@ void Dumper::PrintRemoveFirstInvisible(void* bufferVoid, size_t length)
 
         if (currentVisible)
         {
-            if (isFirstVisible && m_settings.newline)
+            if (isFirstVisible && m_settings.newLine)
             {
                 isFirstVisible = false;
                 if (m_settings.length == 0)
@@ -236,7 +236,7 @@ void Dumper::PrintArray(void* bufferVoid, size_t length)
         if (i > 0)
         {
             cout << ",";
-            if (m_settings.isSpaceBetweenBytes)
+            if (m_settings.isSpaceBetweenAsciiBytes)
                 cout << " ";
         }
         if (i % m_settings.columnCount == 0 && i > 0)
