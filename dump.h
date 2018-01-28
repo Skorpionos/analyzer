@@ -15,24 +15,43 @@
 #include <string>
 #include <cstddef>
 
+namespace dump::defaultvalues
+{
+constexpr size_t ColumnCountDefault = 4;
+constexpr size_t ByteCountInGroup = 8;
+constexpr size_t countBytesBeforeKey = 20;
+constexpr size_t countBytesAfterKey = 20;
+} // dump::defaultvalues
+
+namespace dump::size
+{
+constexpr size_t CharsForOneByte = 3;
+constexpr size_t AdditionalCharsForCArray = 3;
+} // namespace dump::size
+
+
 namespace dump
 {
 
-constexpr size_t ColumnCountDefault = 4;
-constexpr size_t ByteCountInGroup = 8;
 constexpr size_t CharCountPerByte = 3;
 constexpr size_t AdditionalCharCountForCArray = 3;
 
-constexpr size_t countLinesBeforeKey = 2;
-constexpr size_t countLinesAfterKey = 4;
-
-
-enum class Offset
+struct Range
 {
-    Hex, Dec, Both, None, Unknown
+    size_t begin = 0;
+    size_t end = 0;
 };
 
-Offset GetOffsetType(const std::string& offset);
+enum class OffsetTypes
+{
+    Hex,
+    Dec,
+    Both,
+    None,
+    Unknown
+};
+
+OffsetTypes GetOffsetType(const std::string& offset);
 
 enum Color
 {
@@ -41,7 +60,7 @@ enum Color
     Red
 };
 
-const std::vector<std::string> setColor =
+const std::vector<std::string> colorString =
 {
     "\033[0m",
     "\033[1;37;42m",
@@ -57,7 +76,7 @@ struct DumperSettings
     bool isSpaceBetweenAsciiBytes = false;
     bool isSpaceBetweenDumpBytes = true;
 
-    Offset offset = Offset::Dec;
+    OffsetTypes offset = OffsetTypes::Dec;
     bool detailedOffset = false;
 
     char placeHolder = '-';
@@ -70,8 +89,11 @@ struct DumperSettings
 
     size_t startOffset = begin;
 
-    size_t columnCount = dump::ColumnCountDefault;
-    size_t bytesInGroup = dump::ByteCountInGroup;
+    size_t countBytesBeforeKey = dump::defaultvalues::countBytesBeforeKey;
+    size_t countBytesAfterKey = dump::defaultvalues::countBytesAfterKey;
+
+    size_t columnCount = dump::defaultvalues::ColumnCountDefault;
+    size_t bytesInGroup = dump::defaultvalues::ByteCountInGroup;
     size_t bytesInLine = columnCount * bytesInGroup;
 
     bool IsCArray = false;
@@ -79,16 +101,12 @@ struct DumperSettings
     bool useWideChar = false;
     bool ladder = false;
     bool useRelativeAddress = false;
+    bool skipLines = false;
 
     std::string key;
     std::string hkey;
     std::string from;
     std::string till;
-
-//    size_t length = 0;
-//    bool only = false;
-//    bool single = false;
-//    bool compress = false;
 };
 
 struct Line
@@ -98,6 +116,7 @@ struct Line
     std::string ascii;
     std::string indent;
     std::string debug;
+    bool isEmpty = true;
 };
 
 struct IsVisible
@@ -112,8 +131,10 @@ class Ctx
 {
 public:
     Line line {};
+    Range range = {0, 0};
+    bool isPreviousSkip = false;
 
-    void Print(bool isOffsetVisible, bool isDumpVisible, bool isAsciiVisible, bool isCArray, bool isDebugVisible); // TODO moce to Line
+    void Print(bool isOffsetVisible, bool isDumpVisible, bool isAsciiVisible, bool isCArray, bool isDebugVisible);
 };
 
 class Dumper
@@ -140,7 +161,7 @@ private:
 
     void PrepareFirstLine();
     void PrintLineAndIntend(size_t index);
-    void PrintAndClearLine();
+    void PrintAndClearLine(const bool isSkip, const bool isPreviousSkip);
     void CompleteCurrentDumpLine();
 
     void PrintFoundKeyResults(const std::vector<size_t>& positionResults, std::string& keyName) const;
@@ -168,17 +189,19 @@ private:
     uint8_t* ShiftStartOffset(uint8_t* buffer);
 
     bool FindRangeForPairOfKeys(uint8_t* buffer, size_t bufferLength, std::string hexKeyFrom, std::string hexKeyTill,
-            size_t& fromPosition, size_t& tillPosition);
+            Range& range);
 
-    bool FindIndexForKeyInBytes(const uint8_t* buffer, size_t bufferLength, const uint8_t* key, size_t keyLength,
+    bool FindIndexForBytesKey(const uint8_t* buffer, size_t bufferLength, const uint8_t* key, size_t keyLength,
             std::vector<size_t>& resultPositions);
 
     void GetHexKeyBytes(const std::vector<std::string>& words, uint8_t* hexKeyBytes) const;
 
-    void FindByHexKey(const uint8_t* buffer, size_t bufferLength, std::string& hexKey,
-                          std::vector<size_t>& foundPositions, size_t& countBytesInKey);
+    void FindIndexForHexKey(const uint8_t* buffer, size_t bufferLength, std::string& hexKey,
+            std::vector<size_t>& foundPositions, size_t& countBytesInKey);
 
     Color GetColor(size_t index) const;
+    bool IsSkipLine(Range range);
+    bool IsLineNearKeys(const Range& range, size_t position, size_t keySize) const;
 };
 
 }; // namespace dump

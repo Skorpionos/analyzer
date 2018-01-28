@@ -3,5 +3,10 @@
 #include <iostream>
 #include <string>
 
-void PrintSeparator();
+namespace utilities
+{
 
+void PrintSeparator();
+void PrintSkipLine();
+
+} // utilities

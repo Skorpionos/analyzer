@@ -1,7 +1,6 @@
 #include "dump.h"
 #include "file_operations.h"
 #include "read_options.h"
-#include "utilities.h"
 
 using namespace std;
 
