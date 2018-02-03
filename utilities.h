@@ -7,6 +7,6 @@ namespace utilities
 {
 
 void PrintSeparator();
-void PrintSkipLine();
+void PrintEmptyLine(bool isPrint, size_t skippedLinesCount);
 
 } // utilities

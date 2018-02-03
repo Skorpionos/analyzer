@@ -17,10 +17,10 @@
 
 namespace dump::defaultvalues
 {
-constexpr size_t ColumnCountDefault = 4;
+constexpr size_t ColumnCountDefault = 6;
 constexpr size_t ByteCountInGroup = 8;
-constexpr size_t countBytesBeforeKey = 20;
-constexpr size_t countBytesAfterKey = 20;
+constexpr size_t countBytesBeforeKey = 0;
+constexpr size_t countBytesAfterKey = 96;
 } // dump::defaultvalues
 
 namespace dump::size
@@ -29,13 +29,8 @@ constexpr size_t CharsForOneByte = 3;
 constexpr size_t AdditionalCharsForCArray = 3;
 } // namespace dump::size
 
-
 namespace dump
 {
-
-constexpr size_t CharCountPerByte = 3;
-constexpr size_t AdditionalCharCountForCArray = 3;
-
 struct Range
 {
     size_t begin = 0;
@@ -96,12 +91,13 @@ struct DumperSettings
     size_t bytesInGroup = dump::defaultvalues::ByteCountInGroup;
     size_t bytesInLine = columnCount * bytesInGroup;
 
-    bool IsCArray = false;
+    bool isCArray = false;
     bool newLine = false;
     bool useWideChar = false;
     bool ladder = false;
     bool useRelativeAddress = false;
-    bool skipLines = false;
+    bool skipTextWithoutKeys = false;
+    bool isShowEmptyLines = true;
 
     std::string key;
     std::string hkey;
@@ -116,7 +112,6 @@ struct Line
     std::string ascii;
     std::string indent;
     std::string debug;
-    bool isEmpty = true;
 };
 
 struct IsVisible
@@ -131,8 +126,10 @@ class Ctx
 {
 public:
     Line line {};
+    Line savedLine {};
     Range range = {0, 0};
-    bool isPreviousSkip = false;
+    bool previousIsSkipped = false;
+    size_t skipLinesCount = 0;
 
     void Print(bool isOffsetVisible, bool isDumpVisible, bool isAsciiVisible, bool isCArray, bool isDebugVisible);
 };
@@ -150,8 +147,8 @@ private:
     DumperSettings m_settings;
     Ctx m_ctx;
 
-    std::vector<size_t> m_keyResultPositions;
-    std::vector<size_t> m_hkeyResultPositions;
+    std::vector<size_t> m_keyPositionResults;
+    std::vector<size_t> m_hkeyPositionResults;
     size_t m_countBytesInHexKey;
 
 private:
@@ -159,12 +156,12 @@ private:
     void ClearLine();
     void GenerateImpl(uint8_t* buffer);
 
-    void PrepareFirstLine();
+    void PrepareFirstLine(size_t index);
     void PrintLineAndIntend(size_t index);
-    void PrintAndClearLine(const bool isSkip, const bool isPreviousSkip);
+    void PrintAndClearLine(const bool isNewGroupAfterSkippedLines);
     void CompleteCurrentDumpLine();
 
-    void PrintFoundKeyResults(const std::vector<size_t>& positionResults, std::string& keyName) const;
+    void PrintFoundKeyResults(const std::string& keyName, const std::vector<size_t>& positionResults) const;
 
     bool FindIndexForKey(const uint8_t* buffer, size_t bufferLength, std::string key,
             std::vector<size_t>& resultPositions);
@@ -200,7 +197,7 @@ private:
             std::vector<size_t>& foundPositions, size_t& countBytesInKey);
 
     Color GetColor(size_t index) const;
-    bool IsSkipLine(Range range);
+    bool IsLineSkipped(Range range);
     bool IsLineNearKeys(const Range& range, size_t position, size_t keySize) const;
 };
 

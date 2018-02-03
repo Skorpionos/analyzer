@@ -23,7 +23,7 @@ bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSetti
             ("zero", boost::program_options::value(&settings.zeroPlaceHolder), "placeholder for zero")
             ("widechar", boost::program_options::value(&settings.widePlaceHolder), "placeholder for invisible symbols in wide-char words")
             ("wide", boost::program_options::value(&settings.useWideChar), "use wide-char mode for words")
-            ("array", boost::program_options::value(&settings.IsCArray), "generate c-array (0x00, ...)")
+            ("array", boost::program_options::value(&settings.isCArray), "generate c-array (0x00, ...)")
             ("ladder", boost::program_options::value(&settings.ladder), "use intend for separate words")
             ("newline", boost::program_options::value(&settings.newLine), "every visible word starts with new line")
             ("fromstart", boost::program_options::value(&settings.useRelativeAddress), "set offset for --begin as offset=0")
@@ -31,7 +31,8 @@ bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSetti
             ("hkey", boost::program_options::value(&settings.hkey), "key (hex values) for found")
             ("from", boost::program_options::value(&settings.from), "begin from first key (hex value)")
             ("till", boost::program_options::value(&settings.till), "finish with last key (hex value)")
-            ("skip", boost::program_options::value(&settings.skipLines), "skip lines where key is absent")
+            ("skip", boost::program_options::value(&settings.skipTextWithoutKeys), "skip lines where key is absent")
+            ("empty", boost::program_options::value(&settings.isShowEmptyLines), "show empty lines (as ...)")
             ("before", boost::program_options::value(&settings.countBytesBeforeKey), "count lines before key (for skip mode)")
             ("after", boost::program_options::value(&settings.countBytesAfterKey), "count lines after key (for skip mode)")
 //            ("length", boost::program_options::value(&settings.length), "min symbols in word for display")
@@ -54,17 +55,8 @@ bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSetti
         }
         settings.isShowOffset = settings.offset != dump::OffsetTypes::None;
 
-        if (settings.size !=0  && settings.end == 0)
+        if (settings.size !=0 && settings.end == 0)
             settings.end = settings.begin + settings.size - 1;
-
-//        if (!vm.count("zero") )
-//            settings.zeroPlaceHolder = settings.placeHolder;
-
-        if (settings.IsCArray)
-        {
-//            settings.isShowAscii = false;
-            // settings.isShowOffset = false;
-        }
 
         if (settings.newLine || settings.ladder)
             settings.isSpaceBetweenDumpBytes = false;

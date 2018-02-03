@@ -8,9 +8,15 @@ void PrintSeparator()
     std::cout << "================================" << std::endl;
 }
 
-void PrintSkipLine()
+void PrintEmptyLine(bool isPrint, size_t skippedLinesCount)
 {
-    std::cout << "...\n";
+    if (!isPrint)
+        return;
+
+    std::cout << "...";
+    if (skippedLinesCount > 1)
+        std::cout <<  " <" << skippedLinesCount << ">";
+    std::cout << "\n";
 }
 
 } // utilities
