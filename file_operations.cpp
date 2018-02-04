@@ -2,7 +2,7 @@
 
 bool ReadBuffer(std::string fileName, char** buffer, size_t& size)
 {
-    std::cout << fileName << std::endl;
+    std::cout << "analyze file: " << fileName << std::endl;
 
     std::ifstream file(fileName, std::ios_base::binary | std::ios_base::in | std::ios_base::ate);
 

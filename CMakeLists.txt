@@ -13,9 +13,13 @@ set(SOURCE_FILES
         file_operations.cpp
         utilities.h
         utilities.cpp
-        /usr/include/boost/program_options/options_description.hpp
-        read_options.cpp read_options.h)
-add_executable(analyzer ${SOURCE_FILES})
+        read_options.cpp
+        read_options.h
+        finder.h
+        finder.cpp
+        Types.h
+        /usr/include/boost/program_options/options_description.hpp)
+        add_executable(analyzer ${SOURCE_FILES})
 
 
 find_package(Boost COMPONENTS #[[system filesystem]] program_options REQUIRED)

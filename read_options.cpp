@@ -7,8 +7,8 @@ bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSetti
     std::string addressType;
     desc.add_options()
             ("help", "help")
-            ("begin", boost::program_options::value(&settings.begin), "start from offset")
-            ("end", boost::program_options::value(&settings.end), "finish to offset")
+            ("begin", boost::program_options::value(&settings.range.begin), "start from offset")
+            ("end", boost::program_options::value(&settings.range.end), "finish to offset")
             ("size", boost::program_options::value(&settings.size), "count of bytes to display")
             ("group", boost::program_options::value(&settings.columnCount), "number of groups")
             ("bytes", boost::program_options::value(&settings.bytesInGroup), "number of bytes in one group")
@@ -16,7 +16,7 @@ bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSetti
             ("detailed", boost::program_options::value(&settings.detailedOffset), "detailed format for offset (actual for --fromstart)")
             ("dump", boost::program_options::value(&settings.isShowDump), "show dump column")
             ("asc", boost::program_options::value(&settings.isShowAscii), "show ascii column")
-            ("debug", boost::program_options::value(&settings.isShowDebug), "show degug information")
+            ("debug", boost::program_options::value(&settings.isShowDebug), "show debug information")
             ("space", boost::program_options::value(&settings.isSpaceBetweenAsciiBytes), "set space between ascii groups")
             ("spacedump", boost::program_options::value(&settings.isSpaceBetweenDumpBytes), "set space between dump groups")
             ("char", boost::program_options::value(&settings.placeHolder), "placeholder for non visible symbols")
@@ -55,8 +55,8 @@ bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSetti
         }
         settings.isShowOffset = settings.offset != dump::OffsetTypes::None;
 
-        if (settings.size !=0 && settings.end == 0)
-            settings.end = settings.begin + settings.size - 1;
+        if (settings.size !=0 && settings.range.end == 0)
+            settings.range.end = settings.range.begin + settings.size - 1;
 
         if (settings.newLine || settings.ladder)
             settings.isSpaceBetweenDumpBytes = false;
