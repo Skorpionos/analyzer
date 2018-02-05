@@ -8,6 +8,20 @@ void PrintSeparator()
     std::cout << "================================" << std::endl;
 }
 
+void PrintRange(const Range range, const size_t shift, const bool detailed)
+{
+    std::cout << "address <";
+    std::cout << range.begin;
+    if (detailed && shift != 0)
+        std::cout << "/"<< range.begin + shift;
+    std::cout << "...";
+    std::cout << range.end;
+    if (detailed && shift != 0)
+        std::cout << "/"<< range.end + shift;
+    std::cout << ">";
+    std::cout << ", size:" << range.GetSize() << "\n";
+}
+
 void PrintEmptyLine(bool isPrint, size_t skippedLinesCount)
 {
     if (!isPrint)
@@ -19,7 +33,8 @@ void PrintEmptyLine(bool isPrint, size_t skippedLinesCount)
     std::cout << "\n";
 }
 
-void PrintFoundKeyResults(const std::string& keyName, const SizeVector& positionResults, size_t startOffset)
+void PrintFoundKeyResults(const std::string& keyName, const SizeVector& positionResults, const size_t startOffset,
+                          const bool useOffsetDetailedInfo)
 {
     if (keyName.empty())
         return;
@@ -27,10 +42,9 @@ void PrintFoundKeyResults(const std::string& keyName, const SizeVector& position
     std::cout << "for key '" << keyName << "' found " << positionResults.size() << " results: ";
     for (const size_t& position : positionResults)
     {
-        int64_t relativePosition = position - startOffset;
-        std::cout << relativePosition;
-        if (startOffset != 0)
-            std::cout << "/" << position;
+        std::cout << position;
+        if (startOffset != 0 && useOffsetDetailedInfo)
+            std::cout << "/" << position + startOffset;
         std::cout << " ";
     }
     std::cout << "\n";

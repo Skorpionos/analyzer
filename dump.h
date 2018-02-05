@@ -63,9 +63,8 @@ struct DumperSettings
     char widePlaceHolder = ' ';
 
     Range range = {0, 0};
-    size_t size = 0;
 
-    size_t startOffset = range.begin;
+    size_t shift = range.begin;
 
     size_t countBytesBeforeKey = defaultvalues::BytesCountBeforeKey;
     size_t countBytesAfterKey  = defaultvalues::BytesCountAfterKey;

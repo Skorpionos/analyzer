@@ -29,29 +29,31 @@ void Dumper::Generate(void* bufferVoid, const size_t bufferLength)
 {
     auto buffer = static_cast<uint8_t*>(bufferVoid);
 
-    if (m_settings.range.end == 0 || m_settings.range.end >= bufferLength)
+    if ((m_settings.range.end == 0 && m_settings.range.begin != 0) ||
+        (m_settings.range.end >= bufferLength))
         m_settings.range.end = bufferLength - 1;
-
-    m_keyPositionResults  = finder::FindIndexesForKey (buffer, bufferLength, m_settings.key);
-    m_hkeyPositionResults = finder::FindIndexesForHexKey(buffer, bufferLength, m_settings.hkey, m_countBytesInHexKey);
 
     if (m_settings.useRelativeAddress)
         buffer = ShiftStartOffset(buffer);
 
+    // TODO range {} for find functions
+    m_keyPositionResults = finder::FindIndexesForKey(buffer, m_settings.range.begin, m_settings.range.GetSize(),
+                                                     m_settings.key);
+    m_hkeyPositionResults = finder::FindIndexesForHexKey(buffer, m_settings.range.begin, m_settings.range.GetSize(),
+                                                         m_settings.hkey, m_countBytesInHexKey);
+
     if (!m_settings.from.empty() || !m_settings.till.empty())
-        m_settings.range = finder::FindRangeForPairOfKeys(buffer, bufferLength, m_settings.from,m_settings.till);
+        m_settings.range = finder::FindRangeForPairOfKeys(buffer, m_settings.range.begin, m_settings.range.GetSize(),
+                                                          m_settings.from, m_settings.till);
 
     utilities::PrintSeparator();
 
     GenerateImpl(buffer);
 
     utilities::PrintSeparator();
-
-    std::cout << "address <" << m_settings.range.begin << "..." << m_settings.range.end << ">";
-    std::cout << ", size:" << m_settings.range.GetSize() << "\n";
-
-    utilities::PrintFoundKeyResults(m_settings.key, m_keyPositionResults, m_settings.startOffset);
-    utilities::PrintFoundKeyResults(m_settings.hkey, m_hkeyPositionResults, m_settings.startOffset);
+    utilities::PrintRange(m_settings.range, m_settings.shift, m_settings.detailedOffset);
+    utilities::PrintFoundKeyResults(m_settings.key,  m_keyPositionResults,  m_settings.shift, m_settings.detailedOffset);
+    utilities::PrintFoundKeyResults(m_settings.hkey, m_hkeyPositionResults, m_settings.shift, m_settings.detailedOffset);
 }
 
 void Dumper::GenerateImpl(uint8_t* buffer)
@@ -63,7 +65,7 @@ void Dumper::GenerateImpl(uint8_t* buffer)
         std::cout << "{\n";
 
     if (PositionInLine(m_settings.range.begin) != 0)
-        PrepareFirstLine(0);
+        PrepareFirstLine(m_settings.range.begin);
 
     for (size_t index = m_settings.range.begin; index <= m_settings.range.end; ++index)
     {
@@ -152,12 +154,11 @@ bool Dumper::IsLineNearKeys(const Range& range, size_t position, size_t keySize)
 
 uint8_t* Dumper::ShiftStartOffset(uint8_t* buffer)
 {
-    m_settings.startOffset = m_settings.range.begin;
+    m_settings.shift = m_settings.range.begin;
     m_settings.range.begin = 0;
-    m_settings.range.end -= m_settings.startOffset;
+    m_settings.range.end -= m_settings.shift;
 
-    buffer += m_settings.startOffset;
-    return buffer;
+    return buffer + m_settings.shift;
 }
 
 void Dumper::CompleteCurrentDumpLine()
@@ -166,10 +167,11 @@ void Dumper::CompleteCurrentDumpLine()
         m_ctx.line.dump.append(m_ctx.line.indent);
 }
 
-// Actual for --fromStart=true
+// Actual for --shift=true
 void Dumper::PrepareFirstLine(size_t index)
 {
     m_ctx.line.offset += GetOffsetFromIndex(index);
+
     const auto positionInLine = PositionInLine(index);
     m_ctx.line.dump   += GetSpacesForBeginOfDumpLine(positionInLine);
     m_ctx.line.ascii  += GetSpacesForBeginOfAsciiLine(positionInLine);
@@ -358,14 +360,14 @@ std::string Dumper::GetOffsetFromIndex(size_t i) const
 
     if (m_settings.offset == OffsetTypes::Dec || m_settings.offset == OffsetTypes::Both)
     {
-        if (m_settings.startOffset)
+        if (m_settings.shift)
             result += (boost::format("%5d") % i).str();
 
-        if (m_settings.startOffset && m_settings.detailedOffset)
+        if (m_settings.shift && m_settings.detailedOffset)
             result += "|";
 
-        if (m_settings.detailedOffset || !m_settings.startOffset)
-            result += (boost::format("%5d") % (m_settings.startOffset + i)).str();
+        if (m_settings.detailedOffset || !m_settings.shift)
+            result += (boost::format("%5d") % (m_settings.shift + i)).str();
     }
 
     if (m_settings.offset == OffsetTypes::Both)
@@ -373,14 +375,14 @@ std::string Dumper::GetOffsetFromIndex(size_t i) const
 
     if (m_settings.offset == OffsetTypes::Hex || m_settings.offset == OffsetTypes::Both)
     {
-        if (m_settings.startOffset)
+        if (m_settings.shift)
             result += (boost::format("0x%04x") % (i)).str();
 
-        if (m_settings.startOffset && m_settings.detailedOffset)
+        if (m_settings.shift && m_settings.detailedOffset)
             result += "|";
 
-        if (m_settings.detailedOffset || !m_settings.startOffset)
-            result += (boost::format("0x%04x") % (m_settings.startOffset + i)).str();
+        if (m_settings.detailedOffset || !m_settings.shift)
+            result += (boost::format("0x%04x") % (m_settings.shift + i)).str();
     }
 
     if (m_settings.offset != OffsetTypes::None)
@@ -388,7 +390,6 @@ std::string Dumper::GetOffsetFromIndex(size_t i) const
 
     return result;
 }
-
 
 void Ctx::Print(bool isOffsetVisible, bool isDumpVisible, bool isAsciiVisible, bool isCArray, bool isDebugVisible)
 {
@@ -425,8 +426,5 @@ void Dumper::PrintAndClearLine(const bool isNewGroupAfterSkippedLines)
 
     ClearLine();
 }
-
-
-
 
 } // namespace dump

@@ -5,15 +5,16 @@ bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSetti
     namespace po = boost::program_options;
     boost::program_options::options_description desc("Options");
     std::string addressType;
+    size_t bufferSize = 0;
     desc.add_options()
             ("help", "help")
             ("begin", boost::program_options::value(&settings.range.begin), "start from offset")
             ("end", boost::program_options::value(&settings.range.end), "finish to offset")
-            ("size", boost::program_options::value(&settings.size), "count of bytes to display")
+            ("size", boost::program_options::value(&bufferSize), "count of bytes to display")
             ("group", boost::program_options::value(&settings.columnCount), "number of groups")
             ("bytes", boost::program_options::value(&settings.bytesInGroup), "number of bytes in one group")
             ("offset", boost::program_options::value(&addressType), "offset format (hex, dec, both, none)")
-            ("detailed", boost::program_options::value(&settings.detailedOffset), "detailed format for offset (actual for --fromstart)")
+            ("detail", boost::program_options::value(&settings.detailedOffset), "detailed format for offset (actual for --shift=true)")
             ("dump", boost::program_options::value(&settings.isShowDump), "show dump column")
             ("asc", boost::program_options::value(&settings.isShowAscii), "show ascii column")
             ("debug", boost::program_options::value(&settings.isShowDebug), "show debug information")
@@ -26,7 +27,7 @@ bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSetti
             ("array", boost::program_options::value(&settings.isCArray), "generate c-array (0x00, ...)")
             ("ladder", boost::program_options::value(&settings.ladder), "use intend for separate words")
             ("newline", boost::program_options::value(&settings.newLine), "every visible word starts with new line")
-            ("fromstart", boost::program_options::value(&settings.useRelativeAddress), "set offset for --begin as offset=0")
+            ("shift", boost::program_options::value(&settings.useRelativeAddress), "true for use --begin as offset=0")
             ("key", boost::program_options::value(&settings.key), "key (string value) for found")
             ("hkey", boost::program_options::value(&settings.hkey), "key (hex values) for found")
             ("from", boost::program_options::value(&settings.from), "begin from first key (hex value)")
@@ -55,8 +56,9 @@ bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSetti
         }
         settings.isShowOffset = settings.offset != dump::OffsetTypes::None;
 
-        if (settings.size !=0 && settings.range.end == 0)
-            settings.range.end = settings.range.begin + settings.size - 1;
+        if (!vm.count("end"))
+            settings.range.end = vm.count("size") ? settings.range.begin + bufferSize - 1
+                                                  : std::numeric_limits<size_t>::max();
 
         if (settings.newLine || settings.ladder)
             settings.isSpaceBetweenDumpBytes = false;
