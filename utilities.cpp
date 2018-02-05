@@ -34,12 +34,12 @@ void PrintEmptyLine(bool isPrint, size_t skippedLinesCount)
 }
 
 void PrintFoundKeyResults(const std::string& keyName, const SizeVector& positionResults, const size_t startOffset,
-                          const bool useOffsetDetailedInfo)
+                          const bool useOffsetDetailedInfo, const Color color)
 {
     if (keyName.empty())
         return;
 
-    std::cout << "for key '" << keyName << "' found " << positionResults.size() << " results: ";
+    std::cout << "for key '" << ColorCode[color] << keyName << ColorCode[Color::Normal] << "' found " << positionResults.size() << " results: ";
     for (const size_t& position : positionResults)
     {
         std::cout << position;

@@ -24,7 +24,8 @@ FindIndexesForKey(const uint8_t* buffer, const size_t start, const size_t length
 SizeVector FindIndexesForHexKey(const uint8_t* buffer, const size_t start, const size_t legth,
                                 const std::string& hexKey, size_t& bytesCountInHexKey);
 
-Range FindRangeForPairOfKeys(uint8_t* buffer, const size_t startIndex, size_t length, std::string hexKeyFrom,
-                             std::string hexKeyTill);
+Range FindRangeForPairOfKeys(uint8_t* buffer, const size_t startIndex, const size_t length, const std::string& hexKeyFrom,
+                             const std::string& hexKeyTill, const size_t sizeAfterFrom, SizeVector& resultsFrom,
+                             SizeVector& resultsTill, size_t& countBytesInKeyFrom, size_t& countBytesInKeyTill);
 
 }; // namespace finder

@@ -77,20 +77,15 @@ SizeVector FindIndexesForBytesKey(const uint8_t* buffer, const size_t startIndex
     return resultIndexes;
 }
 
-Range FindRangeForPairOfKeys(uint8_t* buffer, const size_t startIndex, size_t length, std::string hexKeyFrom,
-                             std::string hexKeyTill)
+Range FindRangeForPairOfKeys(uint8_t* buffer, const size_t startIndex, const size_t length, const std::string& hexKeyFrom,
+                             const std::string& hexKeyTill, const size_t sizeAfterFrom, SizeVector& resultsFrom,
+                             SizeVector& resultsTill, size_t& countBytesInKeyFrom, size_t& countBytesInKeyTill)
 {
-    size_t countBytesInKeyFrom = 0;
-    size_t countBytesInKeyTill = 0;
-
-    SizeVector resultsFrom = FindIndexesForHexKey(buffer, startIndex, length, hexKeyFrom, countBytesInKeyFrom);
-    SizeVector resultsTill = FindIndexesForHexKey(buffer, startIndex, length, hexKeyTill, countBytesInKeyTill);
-
-    utilities::PrintFoundKeyResults(hexKeyFrom, resultsFrom, 0, false);
-    utilities::PrintFoundKeyResults(hexKeyTill, resultsTill, 0, false);
+    resultsFrom = FindIndexesForHexKey(buffer, startIndex, length, hexKeyFrom, countBytesInKeyFrom);
+    resultsTill = FindIndexesForHexKey(buffer, startIndex, length, hexKeyTill, countBytesInKeyTill);
 
     Range range;
-    range.begin = resultsFrom.empty() ? startIndex
+    range.begin = resultsFrom.empty() ? startIndex + length
                                       : resultsFrom.front();
     range.end = resultsTill.empty() ? startIndex + length
                                     : resultsTill.back() + countBytesInKeyTill - 1;

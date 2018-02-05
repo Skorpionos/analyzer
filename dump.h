@@ -34,18 +34,6 @@ enum class OffsetTypes
 
 OffsetTypes GetOffsetType(const std::string& offset);
 
-enum Color
-{
-    Normal, Green, Red
-};
-
-const StringVector colorString =
-{
-    "\033[0m",
-    "\033[1;37;42m",
-    "\033[1;37;41m"
-};
-
 struct DumperSettings
 {
     bool isShowOffset = true;
@@ -82,8 +70,11 @@ struct DumperSettings
 
     std::string key;
     std::string hkey;
-    std::string from;
-    std::string till;
+    std::string keyFrom;
+    std::string keyTill;
+
+    size_t countBytesAfterHkeyFrom = 0;
+    bool printZeroAsGrey = true;
 };
 
 struct Line
@@ -127,9 +118,17 @@ public:
 private:
     Ctx m_ctx;
 
-    SizeVector m_keyPositionResults;
-    SizeVector m_hkeyPositionResults;
+    SizeVector m_keyIndexResults;
+
+    SizeVector m_hkeyIndexResults;
     size_t m_countBytesInHexKey;
+
+    SizeVector m_fromIndexResults;
+    size_t m_countBytesFromHexKey;
+
+    SizeVector m_tillIndexResults;
+    size_t m_countBytesTillHexKey;
+
 
 private:
 
@@ -145,9 +144,10 @@ private:
 
     std::string GetSpacesForBeginOfAsciiLine(const size_t positionInLine);
     std::string GetSpacesForRestOfDumpLine  (const size_t positionInLine) const;
-    void AppendCurrentDumpLine(const uint8_t* buffer, size_t index, Color currentColor);
+    void AppendCurrentDumpLine(const uint8_t* buffer, size_t index, utilities::Color currentColor);
 
-    void AppendCurrentAsciiLine(const uint8_t* buffer, size_t index, const IsVisible& isVisible, Color currentColor);
+
+    void AppendCurrentAsciiLine(const uint8_t* buffer, size_t index, const IsVisible& isVisible, utilities::Color currentColor);
     std::string GetOffsetFromIndex(size_t i) const;
 
     std::string GetDumpValue(uint8_t value) const;
@@ -158,10 +158,9 @@ private:
 
     bool IsPositionLastInColumn(size_t index) const;
     bool IsEndOfCurrentLine(size_t index) const;
-    uint8_t* ShiftStartOffset(uint8_t* buffer);
+    uint8_t* ShiftStartOffset(uint8_t* buffer, DumperSettings& settings);
 
-
-    Color GetColor(size_t index) const;
+    utilities::Color GetColor(size_t index, const uint8_t currentValue) const;
 
     bool IsLineSkipped(Range range);
     bool IsLineNearKeys(const Range& range, size_t position, size_t keySize) const;

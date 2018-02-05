@@ -31,20 +31,42 @@ void Dumper::Generate(void* bufferVoid, const size_t bufferLength)
 
     if ((m_settings.range.end == 0 && m_settings.range.begin != 0) ||
         (m_settings.range.end >= bufferLength))
+    {
         m_settings.range.end = bufferLength - 1;
+    }
+
+    if (!m_settings.keyFrom.empty() || !m_settings.keyTill.empty())
+    {
+        m_settings.range = finder::FindRangeForPairOfKeys(buffer, m_settings.range.begin, m_settings.range.GetSize() - 1,
+                                                          m_settings.keyFrom, m_settings.keyTill,
+                                                          m_settings.countBytesAfterHkeyFrom, m_fromIndexResults,
+                                                          m_tillIndexResults, m_countBytesFromHexKey, m_countBytesTillHexKey);
+        if (m_settings.countBytesAfterHkeyFrom != 0)
+        {
+            const size_t expectedEnd = m_settings.range.begin + m_settings.countBytesAfterHkeyFrom - 1;
+            if (expectedEnd < m_settings.range.end)
+                m_settings.range.end = expectedEnd;
+        }
+    }
 
     if (m_settings.useRelativeAddress)
-        buffer = ShiftStartOffset(buffer);
+    {
+        buffer = ShiftStartOffset(buffer, m_settings);
+        if (!m_fromIndexResults.empty())
+            for (auto& index : m_fromIndexResults)
+                index -= m_fromIndexResults.front();
+
+        if (!m_tillIndexResults.empty())
+            for (auto& index : m_tillIndexResults)
+                index -= m_fromIndexResults.front();
+    }
 
     // TODO range {} for find functions
-    m_keyPositionResults = finder::FindIndexesForKey(buffer, m_settings.range.begin, m_settings.range.GetSize(),
-                                                     m_settings.key);
-    m_hkeyPositionResults = finder::FindIndexesForHexKey(buffer, m_settings.range.begin, m_settings.range.GetSize(),
-                                                         m_settings.hkey, m_countBytesInHexKey);
+    m_keyIndexResults = finder::FindIndexesForKey(buffer, m_settings.range.begin, m_settings.range.GetSize() - 1,
+                                                  m_settings.key);
+    m_hkeyIndexResults = finder::FindIndexesForHexKey(buffer, m_settings.range.begin, m_settings.range.GetSize() - 1,
+                                                      m_settings.hkey, m_countBytesInHexKey);
 
-    if (!m_settings.from.empty() || !m_settings.till.empty())
-        m_settings.range = finder::FindRangeForPairOfKeys(buffer, m_settings.range.begin, m_settings.range.GetSize(),
-                                                          m_settings.from, m_settings.till);
 
     utilities::PrintSeparator();
 
@@ -52,8 +74,13 @@ void Dumper::Generate(void* bufferVoid, const size_t bufferLength)
 
     utilities::PrintSeparator();
     utilities::PrintRange(m_settings.range, m_settings.shift, m_settings.detailedOffset);
-    utilities::PrintFoundKeyResults(m_settings.key,  m_keyPositionResults,  m_settings.shift, m_settings.detailedOffset);
-    utilities::PrintFoundKeyResults(m_settings.hkey, m_hkeyPositionResults, m_settings.shift, m_settings.detailedOffset);
+    utilities::PrintFoundKeyResults(m_settings.keyFrom, m_fromIndexResults, m_settings.shift, m_settings.detailedOffset,
+                                    utilities::Blue);
+    utilities::PrintFoundKeyResults(m_settings.keyTill, m_tillIndexResults, m_settings.shift, m_settings.detailedOffset,
+                                    utilities::Yellow);
+    utilities::PrintFoundKeyResults(m_settings.key, m_keyIndexResults, m_settings.shift, m_settings.detailedOffset, utilities::Red);
+    utilities::PrintFoundKeyResults(m_settings.hkey, m_hkeyIndexResults, m_settings.shift, m_settings.detailedOffset,
+                                    utilities::Green);
 }
 
 void Dumper::GenerateImpl(uint8_t* buffer)
@@ -80,7 +107,7 @@ void Dumper::GenerateImpl(uint8_t* buffer)
         if (IsNextWordStart(index, charIsVisible) && m_settings.newLine)
             PrintLineAndIntend(index);
 
-        Color currentColor = GetColor(index);
+        utilities::Color currentColor = GetColor(index, buffer[index]);
 
         AppendCurrentDumpLine(buffer, index, currentColor);
 
@@ -112,23 +139,39 @@ void Dumper::GenerateImpl(uint8_t* buffer)
         std::cout << "};\n";
 }
 
-Color Dumper::GetColor(size_t index) const
+utilities::Color Dumper::GetColor(size_t index, const uint8_t currentValue) const
 {
-    if (!m_settings.key.empty())
+    if (!m_keyIndexResults.empty())
     {
-        for (auto position : m_keyPositionResults)
+        for (auto position : m_keyIndexResults)
             if (index - position < m_settings.key.size())
-                return Color::Red;
+                return utilities::Color::Red;
     }
 
-    if (!m_settings.hkey.empty())
+    if (!m_hkeyIndexResults.empty())
     {
-        for (auto position : m_hkeyPositionResults)
+        for (auto position : m_hkeyIndexResults)
             if (index - position < m_countBytesInHexKey)
-                return Color::Green;
+                return utilities::Color::Green;
     }
 
-    return Color::Normal;
+    if (!m_fromIndexResults.empty())
+    {
+        for (auto position : m_fromIndexResults)
+            if (index - position < m_countBytesFromHexKey)
+                return utilities::Color::Blue;
+    }
+
+    if (!m_tillIndexResults.empty())
+    {
+        for (auto position : m_tillIndexResults)
+            if (index - position < m_countBytesTillHexKey)
+                return utilities::Color::Yellow;
+    }
+    if (currentValue == 0 && m_settings.printZeroAsGrey)
+        return utilities::Color::Grey;
+
+    return utilities::Color::Normal;
 }
 
 bool Dumper::IsLineSkipped(Range range)
@@ -136,12 +179,20 @@ bool Dumper::IsLineSkipped(Range range)
     if (!m_settings.skipTextWithoutKeys)
         return false;
 
-    for (auto keyPosition : m_keyPositionResults)
+    for (auto keyPosition : m_keyIndexResults)
         if (IsLineNearKeys(range, keyPosition, m_settings.key.size()))
             return false;
 
-    for (auto keyPosition : m_hkeyPositionResults)
+    for (auto keyPosition : m_hkeyIndexResults)
         if (IsLineNearKeys(range, keyPosition, m_countBytesInHexKey))
+            return false;
+
+    for (auto keyPosition : m_fromIndexResults)
+        if (IsLineNearKeys(range, keyPosition, m_countBytesFromHexKey))
+            return false;
+
+    for (auto keyPosition : m_tillIndexResults)
+        if (IsLineNearKeys(range, keyPosition, m_countBytesTillHexKey))
             return false;
 
     return true;
@@ -152,13 +203,13 @@ bool Dumper::IsLineNearKeys(const Range& range, size_t position, size_t keySize)
               position <= range.end + m_settings.countBytesBeforeKey;
 }
 
-uint8_t* Dumper::ShiftStartOffset(uint8_t* buffer)
+uint8_t* Dumper::ShiftStartOffset(uint8_t* buffer, DumperSettings& settings)
 {
-    m_settings.shift = m_settings.range.begin;
-    m_settings.range.begin = 0;
-    m_settings.range.end -= m_settings.shift;
+    settings.shift = settings.range.begin;
+    settings.range.begin = 0;
+    settings.range.end -= settings.shift;
 
-    return buffer + m_settings.shift;
+    return buffer + settings.shift;
 }
 
 void Dumper::CompleteCurrentDumpLine()
@@ -177,15 +228,15 @@ void Dumper::PrepareFirstLine(size_t index)
     m_ctx.line.ascii  += GetSpacesForBeginOfAsciiLine(positionInLine);
 }
 
-void Dumper::AppendCurrentDumpLine(const uint8_t* buffer, const size_t index, Color currentColor)
+void Dumper::AppendCurrentDumpLine(const uint8_t* buffer, const size_t index, utilities::Color currentColor)
 {
-    if (currentColor != Color::Normal)
-        m_ctx.line.dump.append(colorString[currentColor]);
+    if (currentColor != utilities::Color::Normal)
+        m_ctx.line.dump.append(utilities::ColorCode[currentColor]);
 
     m_ctx.line.dump.append(GetDumpValue(buffer[index]));
 
-    if (currentColor != Color::Normal)
-        m_ctx.line.dump.append(colorString[Color::Normal]);
+    if (currentColor != utilities::Color::Normal)
+        m_ctx.line.dump.append(utilities::ColorCode[utilities::Color::Normal]);
 
     if (m_settings.isCArray && index < m_settings.range.end)
         m_ctx.line.dump.append(",");
@@ -202,10 +253,10 @@ void Dumper::AppendCurrentDumpLine(const uint8_t* buffer, const size_t index, Co
         m_ctx.line.dump.append(GetSpacesForRestOfDumpLine(PositionInLine(index)));
 }
 
-void Dumper::AppendCurrentAsciiLine(const uint8_t* buffer, size_t index, const IsVisible& isVisible, Color currentColor)
+void Dumper::AppendCurrentAsciiLine(const uint8_t* buffer, size_t index, const IsVisible& isVisible, utilities::Color currentColor)
 {
-    if (currentColor != Color::Normal)
-        m_ctx.line.ascii.append(colorString[currentColor]);
+    if (currentColor != utilities::Color::Normal)
+        m_ctx.line.ascii.append(utilities::ColorCode[currentColor]);
 
     if (isVisible.current)
     {
@@ -230,8 +281,8 @@ void Dumper::AppendCurrentAsciiLine(const uint8_t* buffer, size_t index, const I
     if (IsPositionLastInColumn(index) && m_settings.isSpaceBetweenAsciiBytes)
         m_ctx.line.ascii.append(" ");
 
-    if (currentColor != Color::Normal)
-        m_ctx.line.ascii.append(colorString[Color::Normal]);
+    if (currentColor != utilities::Color::Normal)
+        m_ctx.line.ascii.append(utilities::ColorCode[utilities::Color::Normal]);
 }
 
 void Dumper::PrintLineAndIntend(size_t index)
@@ -274,6 +325,7 @@ IsVisible Dumper::IsCharVisible(const uint8_t* buffer, const size_t index) const
 std::string Dumper::GetDumpValue(uint8_t value) const
 {
     std::string dumpValueStr;
+
     if (m_settings.isCArray)
         dumpValueStr.append("0x");
 
@@ -364,7 +416,7 @@ std::string Dumper::GetOffsetFromIndex(size_t i) const
             result += (boost::format("%5d") % i).str();
 
         if (m_settings.shift && m_settings.detailedOffset)
-            result += "|";
+            result += "/";
 
         if (m_settings.detailedOffset || !m_settings.shift)
             result += (boost::format("%5d") % (m_settings.shift + i)).str();
@@ -379,7 +431,7 @@ std::string Dumper::GetOffsetFromIndex(size_t i) const
             result += (boost::format("0x%04x") % (i)).str();
 
         if (m_settings.shift && m_settings.detailedOffset)
-            result += "|";
+            result += "/";
 
         if (m_settings.detailedOffset || !m_settings.shift)
             result += (boost::format("0x%04x") % (m_settings.shift + i)).str();
