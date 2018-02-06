@@ -10,8 +10,8 @@ filter for ip.addr, ip.src, ip.dst
 search
 =======
 wide char search
-shift search
-xor search
+shift search (+ cycle)
+xor search (+ cycle)
 
 heuristic
 =========

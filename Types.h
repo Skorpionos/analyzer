@@ -1,7 +1,5 @@
 #pragma once
 
-#include "utilities.h"
-
 #include <boost/format.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <map>
@@ -20,3 +18,12 @@ struct Range
     size_t GetSize() const {return end - begin + 1;}
 };
 
+enum Color
+{
+    Normal,
+    Green,
+    Red,
+    Grey,
+    Yellow,
+    Blue
+};

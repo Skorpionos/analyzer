@@ -1,7 +1,7 @@
 #pragma once
 
-#include "utilities.h"
 #include "Types.h"
+#include "utilities.h"
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -44,7 +44,7 @@ struct DumperSettings
     bool isSpaceBetweenDumpBytes = true;
 
     OffsetTypes offset = OffsetTypes::Dec;
-    bool detailedOffset = false;
+    bool showDetailed = false;
 
     char placeHolder = '-';
     char zeroPlaceHolder = '.';
@@ -105,6 +105,21 @@ public:
     void Print(bool isOffsetVisible, bool isDumpVisible, bool isAsciiVisible, bool isCArray, bool isDebugVisible);
 };
 
+struct OneKeyFoundResult
+{
+    SizeVector vector;
+    size_t length;
+};
+
+
+struct KeysResults
+{
+    OneKeyFoundResult key;
+    OneKeyFoundResult hkey;
+    OneKeyFoundResult from;
+    OneKeyFoundResult till;
+};
+
 class Dumper
 {
 public:
@@ -118,17 +133,7 @@ public:
 private:
     Ctx m_ctx;
 
-    SizeVector m_keyIndexResults;
-
-    SizeVector m_hkeyIndexResults;
-    size_t m_countBytesInHexKey;
-
-    SizeVector m_fromIndexResults;
-    size_t m_countBytesFromHexKey;
-
-    SizeVector m_tillIndexResults;
-    size_t m_countBytesTillHexKey;
-
+    KeysResults m_foundKeys;
 
 private:
 
@@ -144,10 +149,10 @@ private:
 
     std::string GetSpacesForBeginOfAsciiLine(const size_t positionInLine);
     std::string GetSpacesForRestOfDumpLine  (const size_t positionInLine) const;
-    void AppendCurrentDumpLine(const uint8_t* buffer, size_t index, utilities::Color currentColor);
+    void AppendCurrentDumpLine(const uint8_t* buffer, size_t index, Color currentColor);
 
 
-    void AppendCurrentAsciiLine(const uint8_t* buffer, size_t index, const IsVisible& isVisible, utilities::Color currentColor);
+    void AppendCurrentAsciiLine(const uint8_t* buffer, size_t index, const IsVisible& isVisible, Color currentColor);
     std::string GetOffsetFromIndex(size_t i) const;
 
     std::string GetDumpValue(uint8_t value) const;
@@ -158,12 +163,14 @@ private:
 
     bool IsPositionLastInColumn(size_t index) const;
     bool IsEndOfCurrentLine(size_t index) const;
-    uint8_t* ShiftStartOffset(uint8_t* buffer, DumperSettings& settings);
+    uint8_t* ShiftBeginOfBufferAndResults(uint8_t* buffer, DumperSettings& settings);
 
-    utilities::Color GetColor(size_t index, const uint8_t currentValue) const;
+    Color GetColor(size_t index, const uint8_t currentValue) const;
 
     bool IsLineSkipped(Range range);
     bool IsLineNearKeys(const Range& range, size_t position, size_t keySize) const;
+
+    uint8_t* FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_t* buffer);
 
 };
 

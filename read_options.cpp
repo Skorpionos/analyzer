@@ -14,7 +14,7 @@ bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSetti
             ("group", boost::program_options::value(&settings.columnCount), "number of groups")
             ("bytes", boost::program_options::value(&settings.bytesInGroup), "number of bytes in one group")
             ("offset", boost::program_options::value(&addressType), "offset format (hex, dec, both, none)")
-            ("detail", boost::program_options::value(&settings.detailedOffset), "detailed format for offset (actual for --shift=true)")
+            ("detail", boost::program_options::value(&settings.showDetailed), "detailed format for offset (actual for --shift=true)")
             ("dump", boost::program_options::value(&settings.isShowDump), "show dump column")
             ("asc", boost::program_options::value(&settings.isShowAscii), "show ascii column")
             ("debug", boost::program_options::value(&settings.isShowDebug), "show debug information")

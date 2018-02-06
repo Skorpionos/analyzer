@@ -3,7 +3,7 @@
 namespace finder
 {
 
-SizeVector FindIndexesForKey(const uint8_t* buffer, const size_t start, const size_t length, const std::string& key)
+SizeVector FindIndexesForKey(const uint8_t* buffer, const Range range, const std::string& key)
 {
     if (key.empty())
         return SizeVector();
@@ -12,11 +12,10 @@ SizeVector FindIndexesForKey(const uint8_t* buffer, const size_t start, const si
 
     Uint8Vector keyBytesVector(keyBytes, keyBytes + key.size());
 
-    return FindIndexesForBytesKey(buffer, start, length, keyBytesVector);
+    return FindIndexesForBytesKey(buffer, range, keyBytesVector);
 }
 
-SizeVector FindIndexesForHexKey(const uint8_t* buffer, const size_t start, const size_t legth,
-                                const std::string& hexKey, size_t& bytesCountInHexKey)
+SizeVector FindIndexesForHexKey(const uint8_t* buffer, const Range range, const std::string& hexKey, size_t& bytesCountInHexKey)
 {
     if (hexKey.empty())
         return SizeVector();
@@ -25,7 +24,7 @@ SizeVector FindIndexesForHexKey(const uint8_t* buffer, const size_t start, const
     split(tokens, hexKey, boost::algorithm::is_any_of(" "));
     bytesCountInHexKey = tokens.size();
 
-    return FindIndexesForBytesKey(buffer, start, legth, GetHexBytesFromStringVector(tokens));
+    return FindIndexesForBytesKey(buffer, range, GetHexBytesFromStringVector(tokens));
 }
 
 Uint8Vector GetHexBytesFromStringVector(const StringVector& words)
@@ -45,21 +44,19 @@ Uint8Vector GetHexBytesFromStringVector(const StringVector& words)
 }
 
 // TODO if possible, use functions from standard library
-SizeVector FindIndexesForBytesKey(const uint8_t* buffer, const size_t startIndex, const size_t length,
-                                  const Uint8Vector& keyBytes)
+SizeVector FindIndexesForBytesKey(const uint8_t* buffer, const Range range, const Uint8Vector& keyBytes)
 {
     SizeVector resultIndexes;
     const size_t keyLength = keyBytes.size();
 
-    const size_t endIndex =  startIndex + length;
     size_t previousBufferIndex = 0;
-    for (size_t bufferIndex = startIndex; bufferIndex < endIndex;)
+    for (size_t bufferIndex = range.begin; bufferIndex < range.end;)
     {
         size_t keyIndex = 0;
         size_t foundStringLength = 0;
         size_t indexOfFirstKeyLetter = bufferIndex;
         while (keyIndex < keyLength &&
-               bufferIndex < endIndex &&
+               bufferIndex < range.end &&
                buffer[bufferIndex] == keyBytes[keyIndex])
         {
             ++foundStringLength;
@@ -77,19 +74,17 @@ SizeVector FindIndexesForBytesKey(const uint8_t* buffer, const size_t startIndex
     return resultIndexes;
 }
 
-Range FindRangeForPairOfKeys(uint8_t* buffer, const size_t startIndex, const size_t length, const std::string& hexKeyFrom,
-                             const std::string& hexKeyTill, const size_t sizeAfterFrom, SizeVector& resultsFrom,
-                             SizeVector& resultsTill, size_t& countBytesInKeyFrom, size_t& countBytesInKeyTill)
+Range FindRangeForPairOfKeys(uint8_t* buffer, const Range range,
+                             const std::string& hexKeyFrom, const std::string& hexKeyTill,
+                             dump::OneKeyFoundResult& fromKeyFoundResult, dump::OneKeyFoundResult& tillKeyFoundResult)
 {
-    resultsFrom = FindIndexesForHexKey(buffer, startIndex, length, hexKeyFrom, countBytesInKeyFrom);
-    resultsTill = FindIndexesForHexKey(buffer, startIndex, length, hexKeyTill, countBytesInKeyTill);
+    fromKeyFoundResult.vector = FindIndexesForHexKey(buffer, range, hexKeyFrom, fromKeyFoundResult.length);
+    tillKeyFoundResult.vector = FindIndexesForHexKey(buffer, range, hexKeyTill, tillKeyFoundResult.length);
 
-    Range range;
-    range.begin = resultsFrom.empty() ? startIndex + length
-                                      : resultsFrom.front();
-    range.end = resultsTill.empty() ? startIndex + length
-                                    : resultsTill.back() + countBytesInKeyTill - 1;
-    return range;
+    Range resultRange;
+    resultRange.begin = fromKeyFoundResult.vector.empty() ? range.end : fromKeyFoundResult.vector.front();
+    resultRange.end   = tillKeyFoundResult.vector.empty() ? range.end : tillKeyFoundResult.vector.back() + tillKeyFoundResult.length - 1;
+    return resultRange;
 }
 
 } // namespace finder
