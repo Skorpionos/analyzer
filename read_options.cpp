@@ -1,5 +1,8 @@
 #include "read_options.h"
 
+namespace command_line
+{
+
 bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSettings& settings)
 {
     namespace po = boost::program_options;
@@ -7,41 +10,41 @@ bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSetti
     std::string addressType;
     size_t bufferSize = 0;
     desc.add_options()
-            ("help", "help")
-            ("begin", boost::program_options::value(&settings.range.begin), "begin")
-            ("end", boost::program_options::value(&settings.range.end), "end")
-            ("size", boost::program_options::value(&bufferSize), "count of bytes from begin")
-            ("group", boost::program_options::value(&settings.columnCount), "number of groups")
-            ("bytes", boost::program_options::value(&settings.bytesInGroup), "number of bytes in one group")
-            ("offset", boost::program_options::value(&addressType), "offset format (hex, dec, both, none)")
-            ("detail", boost::program_options::value(&settings.showDetailed), "detailed format for offset (actual for --shift=true)")
-            ("dump", boost::program_options::value(&settings.isShowDump), "show dump column")
-            ("asc", boost::program_options::value(&settings.isShowAscii), "show ascii column")
-            ("debug", boost::program_options::value(&settings.isShowDebug), "show debug information")
-            ("space", boost::program_options::value(&settings.isSpaceBetweenAsciiBytes), "set space between ascii groups")
-            ("spacedump", boost::program_options::value(&settings.isSpaceBetweenDumpBytes), "set space between dump groups")
-            ("char", boost::program_options::value(&settings.placeHolder), "placeholder for non visible symbols")
-            ("zero", boost::program_options::value(&settings.zeroPlaceHolder), "placeholder for zero")
-            ("widechar", boost::program_options::value(&settings.widePlaceHolder), "placeholder for invisible symbols in wide-char words")
-            ("wide", boost::program_options::value(&settings.useWideChar), "use wide-char mode for words")
-            ("array", boost::program_options::value(&settings.isCArray), "generate c-array (0x00, ...)")
-            ("ladder", boost::program_options::value(&settings.ladder), "use intend for separate words")
-            ("newline", boost::program_options::value(&settings.newLine), "every visible word starts with new line")
-            ("shift", boost::program_options::value(&settings.useRelativeAddress), "choose true for use --begin as offset=0")
-            ("key", boost::program_options::value(&settings.key), "find key (string value)")
-            ("hkey", boost::program_options::value(&settings.hkey), "find key (hex values)")
-            ("from", boost::program_options::value(&settings.keyFrom), "begin from first key (hex value)")
-            ("till", boost::program_options::value(&settings.keyTill), "finish with last key (hex value)")
-            ("skip", boost::program_options::value(&settings.skipTextWithoutKeys), "skip lines where key is absent")
-            ("empty", boost::program_options::value(&settings.isShowEmptyLines), "show empty lines (as ...)")
-            ("before", boost::program_options::value(&settings.countBytesBeforeKey), "count lines before key (for skip mode)")
-            ("after", boost::program_options::value(&settings.countBytesAfterKey), "count lines after key (for skip mode)")
-            ("range", boost::program_options::value(&settings.countBytesAfterHkeyFrom), "count bytes after --from key")
-            ("grey", boost::program_options::value(&settings.printZeroAsGrey), "print 0x00 in grey color")
+        ("help", "help")
+        ("begin", boost::program_options::value(&settings.range.begin), "begin")
+        ("end", boost::program_options::value(&settings.range.end), "end")
+        ("size", boost::program_options::value(&bufferSize), "count of bytes from begin")
+        ("group", boost::program_options::value(&settings.columnCount), "number of groups")
+        ("bytes", boost::program_options::value(&settings.bytesInGroup), "number of bytes in one group")
+        ("offset", boost::program_options::value(&addressType), "offset format (hex, dec, both, none)")
+        ("detail", boost::program_options::value(&settings.showDetailed), "detailed format for offset (actual for --shift=true)")
+        ("dump", boost::program_options::value(&settings.isShowDump), "show dump column")
+        ("asc", boost::program_options::value(&settings.isShowAscii), "show ascii column")
+        ("debug", boost::program_options::value(&settings.isShowDebug), "show debug information")
+        ("space", boost::program_options::value(&settings.isSpaceBetweenAsciiBytes), "set space between ascii groups")
+        ("spacedump", boost::program_options::value(&settings.isSpaceBetweenDumpBytes), "set space between dump groups")
+        ("char", boost::program_options::value(&settings.placeHolder), "placeholder for non visible symbols")
+        ("zero", boost::program_options::value(&settings.zeroPlaceHolder), "placeholder for zero")
+        ("widechar", boost::program_options::value(&settings.widePlaceHolder), "placeholder for invisible symbols in wide-char words")
+        ("wide", boost::program_options::value(&settings.useWideChar), "use wide-char mode for words")
+        ("array", boost::program_options::value(&settings.isCArray), "generate c-array (0x00, ...)")
+        ("ladder", boost::program_options::value(&settings.ladder), "use intend for separate words")
+        ("newline", boost::program_options::value(&settings.newLine), "every visible word starts with new line")
+        ("shift", boost::program_options::value(&settings.useRelativeAddress), "choose true for use --begin as offset=0")
+        ("key", boost::program_options::value(&settings.key), "find key (string value)")
+        ("hkey", boost::program_options::value(&settings.hkey), "find key (hex values)")
+        ("from", boost::program_options::value(&settings.keyFrom), "begin from first key (hex value)")
+        ("till", boost::program_options::value(&settings.keyTill), "finish with last key (hex value)")
+        ("skip", boost::program_options::value(&settings.skipTextWithoutKeys), "skip lines where key is absent")
+        ("empty", boost::program_options::value(&settings.isShowEmptyLines), "show empty lines (as ...)")
+        ("before", boost::program_options::value(&settings.countBytesBeforeKey), "count lines before key (for skip mode)")
+        ("after", boost::program_options::value(&settings.countBytesAfterKey), "count lines after key (for skip mode)")
+        ("range", boost::program_options::value(&settings.countBytesAfterHkeyFrom), "count bytes after --from key")
+        ("grey", boost::program_options::value(&settings.printZeroAsGrey), "print 0x00 in grey color")
 //            ("length", boost::program_options::value(&settings.length), "min symbols in word for display")
 //            ("single", boost::program_options::value(&settings.single), "delete first non visible symbols in every group")
 //            ("compress", boost::program_options::value(&settings.compress), "replace following non visible symbols to one")
-            ;
+        ;
     try
     {
         boost::program_options::variables_map vm;
@@ -78,3 +81,5 @@ bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSetti
 
     return true;
 }
+
+} // namespace command_line

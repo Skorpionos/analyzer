@@ -2,22 +2,20 @@
 #include "file_operations.h"
 #include "read_options.h"
 
-using namespace std;
-
 int main(int argc, char* argv[])
 {
     dump::DumperSettings settings;
 
     std::string fileName;
 
-    if (!ReadOptions(argc, argv, fileName, settings))
+    if (!command_line::ReadOptions(argc, argv, fileName, settings))
         return 0;
 
     char* buffer = nullptr;
 
     size_t size = 0;
 
-    ReadBuffer(fileName, &buffer, size);
+    files_operations::ReadBuffer(fileName, & buffer, size);
 
     dump::Dumper dumper(settings);
 
@@ -27,8 +25,6 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
-
 
 
 

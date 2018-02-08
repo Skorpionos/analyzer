@@ -18,3 +18,6 @@ heuristic
 find identical sequence of bytes (length as argument)
 find iterators
 find headers (as combination of identical sequence and iterators)
+
+bugs
+****

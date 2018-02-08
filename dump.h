@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Types.h"
+#include "dumper_settings.h"
 #include "utilities.h"
 
 #include <boost/algorithm/string/split.hpp>
@@ -8,15 +8,6 @@
 
 #include <map>
 #include <sstream>
-#include <string>
-
-namespace dump::defaultvalues
-{
-constexpr size_t ColumnCountDefault = 6;
-constexpr size_t BytesCountInGroup = 8;
-constexpr size_t BytesCountBeforeKey = 0;
-constexpr size_t BytesCountAfterKey = 96;
-}
 
 namespace dump::size
 {
@@ -26,56 +17,6 @@ constexpr size_t AdditionalCharsForCArray = 3;
 
 namespace dump
 {
-
-enum class OffsetTypes
-{
-    Hex, Dec, Both, None, Unknown
-};
-
-OffsetTypes GetOffsetType(const std::string& offset);
-
-struct DumperSettings
-{
-    bool isShowOffset = true;
-    bool isShowDump = true;
-    bool isShowAscii = true;
-    bool isShowDebug = false;
-    bool isSpaceBetweenAsciiBytes = false;
-    bool isSpaceBetweenDumpBytes = true;
-
-    OffsetTypes offset = OffsetTypes::Dec;
-    bool showDetailed = false;
-
-    char placeHolder = '-';
-    char zeroPlaceHolder = '.';
-    char widePlaceHolder = ' ';
-
-    Range range = {0, 0};
-
-    size_t shift = range.begin;
-
-    size_t countBytesBeforeKey = defaultvalues::BytesCountBeforeKey;
-    size_t countBytesAfterKey  = defaultvalues::BytesCountAfterKey;
-    size_t columnCount         = defaultvalues::ColumnCountDefault;
-    size_t bytesInGroup        = defaultvalues::BytesCountInGroup;
-    size_t bytesInLine = columnCount * bytesInGroup;
-
-    bool isCArray = false;
-    bool newLine = false;
-    bool useWideChar = false;
-    bool ladder = false;
-    bool useRelativeAddress = false;
-    bool skipTextWithoutKeys = false;
-    bool isShowEmptyLines = true;
-
-    std::string key;
-    std::string hkey;
-    std::string keyFrom;
-    std::string keyTill;
-
-    size_t countBytesAfterHkeyFrom = 0;
-    bool printZeroAsGrey = true;
-};
 
 struct Line
 {
@@ -105,21 +46,6 @@ public:
     void Print(bool isOffsetVisible, bool isDumpVisible, bool isAsciiVisible, bool isCArray, bool isDebugVisible);
 };
 
-struct OneKeyFoundResult
-{
-    SizeVector vector;
-    size_t length;
-};
-
-
-struct KeysResults
-{
-    OneKeyFoundResult key;
-    OneKeyFoundResult hkey;
-    OneKeyFoundResult from;
-    OneKeyFoundResult till;
-};
-
 class Dumper
 {
 public:
@@ -127,13 +53,16 @@ public:
 
     void Generate(void* bufferVoid, const size_t bufferLength);
 
-    void SetSettings(dump::DumperSettings settings);
+    void SetSettings(DumperSettings settings);
 
     DumperSettings m_settings;
+
 private:
     Ctx m_ctx;
 
-    KeysResults m_foundKeys;
+    Keys m_keys;
+
+    const std::vector<TheKey*> m_keysPtrs = {&m_keys.key, &m_keys.hkey, &m_keys.hkeyFrom, &m_keys.hkeyTill};
 
 private:
 
@@ -149,10 +78,10 @@ private:
 
     std::string GetSpacesForBeginOfAsciiLine(const size_t positionInLine);
     std::string GetSpacesForRestOfDumpLine  (const size_t positionInLine) const;
-    void AppendCurrentDumpLine(const uint8_t* buffer, size_t index, Color currentColor);
+    void AppendCurrentDumpLine(const uint8_t* buffer, size_t index, utilities::Color currentColor);
 
 
-    void AppendCurrentAsciiLine(const uint8_t* buffer, size_t index, const IsVisible& isVisible, Color currentColor);
+    void AppendCurrentAsciiLine(const uint8_t* buffer, size_t index, const IsVisible& isVisible, utilities::Color currentColor);
     std::string GetOffsetFromIndex(size_t i) const;
 
     std::string GetDumpValue(uint8_t value) const;
@@ -165,7 +94,7 @@ private:
     bool IsEndOfCurrentLine(size_t index) const;
     uint8_t* ShiftBeginOfBufferAndResults(uint8_t* buffer, DumperSettings& settings);
 
-    Color GetColor(size_t index, const uint8_t currentValue) const;
+    utilities::Color GetColor(size_t index, const uint8_t currentValue) const;
 
     bool IsLineSkipped(Range range);
     bool IsLineNearKeys(const Range& range, size_t position, size_t keySize) const;

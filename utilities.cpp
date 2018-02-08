@@ -33,32 +33,30 @@ void PrintEmptyLine(bool isPrint, size_t skippedLinesCount)
     std::cout << "\n";
 }
 
-void PrintFoundKeyResults(const std::string& keyName, const SizeVector& indexResults, const size_t startOffset,
-                          const bool useOffsetDetailedInfo, const Color color)
+void PrintFoundKeyResults(const TheKey& key, const Color color, const bool useDetailedInfo, const size_t startOffset)
 {
-    if (keyName.empty())
+    if (key.value.empty())
         return;
 
-    std::cout << "for key '" << CololAnsiCode[color] << keyName << CololAnsiCode[Color::Normal] << "' found " << indexResults.size() << " results: ";
-    for (const size_t& position : indexResults)
+    std::cout << "for key '" << ColorAnsiCode[color] << key.value << ColorAnsiCode[Color::Normal];
+    std::cout << "' found " << key.results.size() << " results: ";
+
+    for (const size_t& index : key.results)
     {
-        std::cout << position;
-        if (startOffset != 0 && useOffsetDetailedInfo)
-            std::cout << "/" << position + startOffset;
+        std::cout << index;
+        if (startOffset != 0 && useDetailedInfo)
+            std::cout << "/" << index + startOffset;
         std::cout << " ";
     }
     std::cout << "\n";
 }
 
-void PrintKeysResults(const std::string& keyFrom, const std::string& keyTill, const std::string& key,
-                      const std::string& hkey, const size_t shift, const bool showDetailed,
-                      const SizeVector& fromIndexResults, const SizeVector& tillIndexResults,
-                      const SizeVector& keyIndexResults, const SizeVector& hkeyIndexResults)
+void PrintKeysResults(const Keys& keys, const bool showDetailed, const size_t shift)
 {
-    PrintFoundKeyResults(keyFrom, fromIndexResults, shift, showDetailed, Color::Blue);
-    PrintFoundKeyResults(keyTill, tillIndexResults, shift, showDetailed, Color::Yellow);
-    PrintFoundKeyResults(key, keyIndexResults, shift, showDetailed, Color::Red);
-    PrintFoundKeyResults(hkey, hkeyIndexResults, shift, showDetailed, Color::Green);
+    PrintFoundKeyResults(keys.hkeyFrom, Color::Blue,   showDetailed, shift);
+    PrintFoundKeyResults(keys.hkeyTill, Color::Yellow, showDetailed, shift);
+    PrintFoundKeyResults(keys.key,  Color::Red,    showDetailed, shift);
+    PrintFoundKeyResults(keys.hkey, Color::Green,  showDetailed, shift);
 }
 
 } // utilities

@@ -1,5 +1,8 @@
 #include "file_operations.h"
 
+namespace files_operations
+{
+
 bool ReadBuffer(std::string fileName, char** buffer, size_t& size)
 {
     std::cout << "analyze file: " << fileName << std::endl;
@@ -15,17 +18,18 @@ bool ReadBuffer(std::string fileName, char** buffer, size_t& size)
 
     try
     {
-        *buffer = new char[size];
-    }
-    catch (...)
+        * buffer = new char[size];
+    } catch (...)
     {
         std::cout << "Not enough memory" << std::endl;
         return false;
     }
 
     file.seekg(0, std::ios_base::beg);
-    file.read(*buffer, size);
+    file.read(* buffer, size);
     file.close();
 
     return true;
 }
+
+} // namespace files_operations

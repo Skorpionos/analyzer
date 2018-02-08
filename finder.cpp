@@ -3,10 +3,12 @@
 namespace finder
 {
 
-SizeVector FindIndexesForKey(const uint8_t* buffer, const Range range, const std::string& key)
+SizeVector FindIndexesForKey(const uint8_t* buffer, const Range range, const std::string& key, size_t& bytesCountInHexKey)
 {
     if (key.empty())
         return SizeVector();
+
+    bytesCountInHexKey = key.size();
 
     const auto& keyBytes = reinterpret_cast<const uint8_t*>(key.c_str());
 
@@ -43,7 +45,7 @@ Uint8Vector GetHexBytesFromStringVector(const StringVector& words)
     return hexKeyBytes;
 }
 
-// TODO if possible, use functions from standard library
+// TODO use functions from standard library
 SizeVector FindIndexesForBytesKey(const uint8_t* buffer, const Range range, const Uint8Vector& keyBytes)
 {
     SizeVector resultIndexes;
@@ -74,16 +76,15 @@ SizeVector FindIndexesForBytesKey(const uint8_t* buffer, const Range range, cons
     return resultIndexes;
 }
 
-Range FindRangeForPairOfKeys(uint8_t* buffer, const Range range,
-                             const std::string& hexKeyFrom, const std::string& hexKeyTill,
-                             dump::OneKeyFoundResult& fromKeyFoundResult, dump::OneKeyFoundResult& tillKeyFoundResult)
+Range FindRangeForPairOfKeys(uint8_t* buffer, const Range range, TheKey& hexKeyFrom, TheKey& hexKeyTill)
 {
-    fromKeyFoundResult.vector = FindIndexesForHexKey(buffer, range, hexKeyFrom, fromKeyFoundResult.length);
-    tillKeyFoundResult.vector = FindIndexesForHexKey(buffer, range, hexKeyTill, tillKeyFoundResult.length);
+    hexKeyFrom.results = FindIndexesForHexKey(buffer, range, hexKeyFrom.value, hexKeyFrom.length);
+    hexKeyTill.results = FindIndexesForHexKey(buffer, range, hexKeyTill.value, hexKeyTill.length);
 
     Range resultRange;
-    resultRange.begin = fromKeyFoundResult.vector.empty() ? range.end : fromKeyFoundResult.vector.front();
-    resultRange.end   = tillKeyFoundResult.vector.empty() ? range.end : tillKeyFoundResult.vector.back() + tillKeyFoundResult.length - 1;
+    resultRange.begin = hexKeyFrom.results.empty() ? range.begin : hexKeyFrom.results.front();
+    resultRange.end   = hexKeyTill.results.empty() ? range.end   : hexKeyTill.results.back() + hexKeyTill.length - 1;
+
     return resultRange;
 }
 
