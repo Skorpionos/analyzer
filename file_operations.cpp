@@ -18,15 +18,16 @@ bool ReadBuffer(std::string fileName, char** buffer, size_t& size)
 
     try
     {
-        * buffer = new char[size];
-    } catch (...)
+        *buffer = new char[size];
+    }
+    catch (...)
     {
         std::cout << "Not enough memory" << std::endl;
         return false;
     }
 
     file.seekg(0, std::ios_base::beg);
-    file.read(* buffer, size);
+    file.read(* buffer, static_cast<std::streamsize>(size));
     file.close();
 
     return true;

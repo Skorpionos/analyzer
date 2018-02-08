@@ -3,28 +3,28 @@
 namespace finder
 {
 
-SizeVector FindIndexesForKey(const uint8_t* buffer, const Range range, const std::string& key, size_t& bytesCountInHexKey)
+SizeVector FindIndexesForKey(const uint8_t* buffer, const Range range, TheKey& key)
 {
-    if (key.empty())
+    if (key.value.empty())
         return SizeVector();
 
-    bytesCountInHexKey = key.size();
+    key.length = key.value.size();
 
-    const auto& keyBytes = reinterpret_cast<const uint8_t*>(key.c_str());
+    const auto& keyBytes = reinterpret_cast<const uint8_t*>(key.value.c_str());
 
-    Uint8Vector keyBytesVector(keyBytes, keyBytes + key.size());
+    Uint8Vector keyBytesVector(keyBytes, keyBytes + key.value.size());
 
     return FindIndexesForBytesKey(buffer, range, keyBytesVector);
 }
 
-SizeVector FindIndexesForHexKey(const uint8_t* buffer, const Range range, const std::string& hexKey, size_t& bytesCountInHexKey)
+SizeVector FindIndexesForHexKey(const uint8_t* buffer, const Range range, TheKey& hexKey)
 {
-    if (hexKey.empty())
+    if (hexKey.value.empty())
         return SizeVector();
 
     StringVector tokens;
-    split(tokens, hexKey, boost::algorithm::is_any_of(" "));
-    bytesCountInHexKey = tokens.size();
+    split(tokens, hexKey.value, boost::algorithm::is_any_of(" "));
+    hexKey.length = tokens.size();
 
     return FindIndexesForBytesKey(buffer, range, GetHexBytesFromStringVector(tokens));
 }
@@ -78,8 +78,8 @@ SizeVector FindIndexesForBytesKey(const uint8_t* buffer, const Range range, cons
 
 Range FindRangeForPairOfKeys(uint8_t* buffer, const Range range, TheKey& hexKeyFrom, TheKey& hexKeyTill)
 {
-    hexKeyFrom.results = FindIndexesForHexKey(buffer, range, hexKeyFrom.value, hexKeyFrom.length);
-    hexKeyTill.results = FindIndexesForHexKey(buffer, range, hexKeyTill.value, hexKeyTill.length);
+    hexKeyFrom.results = FindIndexesForHexKey(buffer, range, hexKeyFrom);
+    hexKeyTill.results = FindIndexesForHexKey(buffer, range, hexKeyTill);
 
     Range resultRange;
     resultRange.begin = hexKeyFrom.results.empty() ? range.begin : hexKeyFrom.results.front();

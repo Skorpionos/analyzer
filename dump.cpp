@@ -17,8 +17,14 @@ void Dumper::SetSettings(DumperSettings settings)
 
     m_keys.key.value      = m_settings.key;
     m_keys.hkey.value     = m_settings.hkey;
-    m_keys.hkeyFrom.value = m_settings.keyFrom;
-    m_keys.hkeyTill.value = m_settings.keyTill;
+    m_keys.hkeyFrom.value = m_settings.hkeyFrom;
+    m_keys.hkeyTill.value = m_settings.hkeyTill;
+
+    m_keysPtrs = {&m_keys.key, &m_keys.hkey, &m_keys.hkeyFrom, &m_keys.hkeyTill};
+
+    size_t keyIndex = m_keysPtrs.size();
+    for (const auto& keyValue : m_settings.hkeyValueVector)
+        m_keys.hexKeysVector.push_back(TheKey(keyIndex++, keyValue));
 }
 
 void Dumper::ClearLine()
@@ -46,6 +52,11 @@ void Dumper::Generate(void* bufferVoid, const size_t bufferLength)
     utilities::PrintRange(m_settings.range, m_settings.shift, m_settings.showDetailed);
 
     utilities::PrintKeysResults(m_keys, m_settings.showDetailed, m_settings.shift);
+
+    for (auto& key : m_keys.hexKeysVector)
+    {
+        utilities::PrintFoundKeyResults(key, m_settings.showDetailed, m_settings.shift);
+    }
 }
 
 void Dumper::GenerateImpl(uint8_t* buffer)
@@ -112,7 +123,7 @@ uint8_t* Dumper::FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_
         m_settings.range.end = bufferLength - 1;
     }
 
-    if (!m_settings.keyFrom.empty() || !m_settings.keyTill.empty())
+    if (!m_keys.hkeyFrom.value.empty() || !m_keys.hkeyTill.value.empty())
     {
         m_settings.range = finder::FindRangeForPairOfKeys(buffer, m_settings.range, m_keys.hkeyFrom, m_keys.hkeyTill);
         if (m_settings.countBytesAfterHkeyFrom != 0)
@@ -126,18 +137,33 @@ uint8_t* Dumper::FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_
     if (m_settings.useRelativeAddress)
         buffer = ShiftBeginOfBufferAndResults(buffer, m_settings);
 
-    m_keys.key.results  = finder::FindIndexesForKey(buffer, m_settings.range, m_settings.key, m_keys.key.length);
-    m_keys.hkey.results = finder::FindIndexesForHexKey(buffer, m_settings.range, m_settings.hkey, m_keys.hkey.length);
+    m_keys.key.results  = finder::FindIndexesForKey   (buffer, m_settings.range, m_keys.key);
+
+    m_keys.hkey.results = finder::FindIndexesForHexKey(buffer, m_settings.range, m_keys.hkey);
+
+    for (auto& key : m_keys.hexKeysVector)
+    {
+        std::cout << "key.value:" << key.value << "\n";
+        key.results = finder::FindIndexesForHexKey(buffer, m_settings.range, key);
+
+        std::cout << "key.results.size:" << key.results.size()  << "\n";
+
+        m_keysPtrs.push_back(&key);
+    }
+
     return buffer;
 }
 
 utilities::Color Dumper::GetColor(size_t index, const uint8_t currentValue) const
 {
     for (const auto* key : m_keysPtrs)
+    {
+//        std::cout << key->index << " " << key->value << " " << key->results.size() << "\n";
         if (!key->results.empty())
             for (const auto position : key->results)
                 if (index - position < key->length)
-                    return static_cast<utilities::Color>(key->index);
+                    return utilities::GetColorIndex(key->index);
+    }
 
     if (currentValue == 0 && m_settings.printZeroAsGrey)
         return utilities::Color::Grey;
@@ -241,7 +267,7 @@ void Dumper::AppendCurrentAsciiLine(const uint8_t* buffer, size_t index, const I
 
     if (isVisible.current)
     {
-        m_ctx.line.ascii += buffer[index];
+        m_ctx.line.ascii += static_cast<char>(buffer[index]);
 //        currentWord += buffer[index];
     }
     else

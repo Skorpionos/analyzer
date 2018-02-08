@@ -25,23 +25,15 @@ struct TheKey
     SizeVector results;
     size_t length = 0;
 
-    TheKey(const size_t index) : index(index) {}
+    TheKey(const size_t id_, const std::string value_ = "") : index(id_), value(value_) {}
 };
-
-//enum KeyType
-//{
-//    key = 0,
-//    hkey = 1,
-//    hkeyFrom = 2,
-//    hkeyTill = 3
-//
-//};
 
 struct Keys
 {
-    TheKey key      {1};
-    TheKey hkey     {2};
-    TheKey hkeyFrom {3};
-    TheKey hkeyTill {4};
+    TheKey hkeyFrom {0};
+    TheKey hkeyTill {1};
+    TheKey key      {2};
+    TheKey hkey     {3};
+    std::vector<TheKey> hexKeysVector;
 };
 

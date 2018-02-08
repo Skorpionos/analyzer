@@ -62,7 +62,7 @@ private:
 
     Keys m_keys;
 
-    const std::vector<TheKey*> m_keysPtrs = {&m_keys.key, &m_keys.hkey, &m_keys.hkeyFrom, &m_keys.hkeyTill};
+    std::vector<TheKey*> m_keysPtrs = {};
 
 private:
 
@@ -101,6 +101,7 @@ private:
 
     uint8_t* FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_t* buffer);
 
+    utilities::Color GetColorIndex(const size_t colorIndex) const;
 };
 
 }; // namespace dump
