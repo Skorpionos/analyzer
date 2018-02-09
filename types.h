@@ -20,20 +20,19 @@ struct Range
 
 struct TheKey
 {
-    size_t index = 0;
+    size_t id = 0;
     std::string value;
     SizeVector results;
     size_t length = 0;
 
-    TheKey(const size_t id_, const std::string value_ = "") : index(id_), value(value_) {}
+    TheKey(const std::string value_ = "") : value(value_) {}
 };
 
-struct Keys
+struct SomeKeys
 {
-    TheKey hkeyFrom {0};
-    TheKey hkeyTill {1};
-    TheKey key      {2};
-    TheKey hkey     {3};
-    std::vector<TheKey> hexKeysVector;
+    TheKey hkeyFrom;
+    TheKey hkeyTill;
+    TheKey key;
+//    std::vector<TheKey> hexKeysVector;
 };
 

@@ -22,6 +22,8 @@ SizeVector FindIndexesForHexKey(const uint8_t* buffer, const Range range, TheKey
     if (hexKey.value.empty())
         return SizeVector();
 
+    std::cout << hexKey.value << " " << hexKey.id << "\n";
+
     StringVector tokens;
     split(tokens, hexKey.value, boost::algorithm::is_any_of(" "));
     hexKey.length = tokens.size();

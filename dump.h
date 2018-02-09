@@ -60,9 +60,10 @@ public:
 private:
     Ctx m_ctx;
 
-    Keys m_keys;
+    SomeKeys m_keys;
 
     std::vector<TheKey*> m_keysPtrs = {};
+    size_t m_limitingKeysCount = 0;
 
 private:
 
@@ -78,9 +79,7 @@ private:
 
     std::string GetSpacesForBeginOfAsciiLine(const size_t positionInLine);
     std::string GetSpacesForRestOfDumpLine  (const size_t positionInLine) const;
-    void AppendCurrentDumpLine(const uint8_t* buffer, size_t index, utilities::Color currentColor);
-
-
+    void AppendCurrentDumpLine (const uint8_t* buffer, size_t index, utilities::Color currentColor);
     void AppendCurrentAsciiLine(const uint8_t* buffer, size_t index, const IsVisible& isVisible, utilities::Color currentColor);
     std::string GetOffsetFromIndex(size_t i) const;
 
@@ -100,8 +99,7 @@ private:
     bool IsLineNearKeys(const Range& range, size_t position, size_t keySize) const;
 
     uint8_t* FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_t* buffer);
-
-    utilities::Color GetColorIndex(const size_t colorIndex) const;
+    void AddKeyInVector(TheKey& key, std::vector<TheKey*, std::allocator<TheKey*>>& keysPtrs);
 };
 
 }; // namespace dump

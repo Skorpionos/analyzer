@@ -38,7 +38,7 @@ void PrintFoundKeyResults(const TheKey& key, const bool useDetailedInfo, const s
     if (key.value.empty())
         return;
 
-    std::cout << "for key '" << ColorAnsiCode[GetColorIndex(key.index)] << key.value << ColorAnsiCode[Color::Normal];
+    std::cout << "for key '" << ColorAnsiCode[GetColorIndex(key.id)] << key.value << ColorAnsiCode[Color::Normal];
     std::cout << "' found " << key.results.size() << " results: ";
 
     for (const size_t& index : key.results)
@@ -51,12 +51,11 @@ void PrintFoundKeyResults(const TheKey& key, const bool useDetailedInfo, const s
     std::cout << "\n";
 }
 
-void PrintKeysResults(const Keys& keys, const bool showDetailed, const size_t shift)
+void PrintKeysResults(const SomeKeys& keys, const bool showDetailed, const size_t shift)
 {
     PrintFoundKeyResults(keys.hkeyFrom, showDetailed, shift);
     PrintFoundKeyResults(keys.hkeyTill, showDetailed, shift);
     PrintFoundKeyResults(keys.key, showDetailed, shift);
-    PrintFoundKeyResults(keys.hkey, showDetailed, shift);
 }
 
 Color GetColorIndex(const size_t colorIndex)

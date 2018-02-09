@@ -37,6 +37,6 @@ void PrintFoundKeyResults(const TheKey& key, const bool useOffsetDetailedInfo, c
 
 void PrintRange(const Range range, const size_t shift, const bool detailed);
 
-void PrintKeysResults(const Keys& keys, const bool showDetailed, const size_t shift);
+void PrintKeysResults(const SomeKeys& keys, const bool showDetailed, const size_t shift);
 
 } // utilities

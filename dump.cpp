@@ -16,15 +16,17 @@ void Dumper::SetSettings(DumperSettings settings)
     m_settings = std::move(settings);
 
     m_keys.key.value      = m_settings.key;
-    m_keys.hkey.value     = m_settings.hkey;
     m_keys.hkeyFrom.value = m_settings.hkeyFrom;
     m_keys.hkeyTill.value = m_settings.hkeyTill;
 
-    m_keysPtrs = {&m_keys.key, &m_keys.hkey, &m_keys.hkeyFrom, &m_keys.hkeyTill};
-
-    size_t keyIndex = m_keysPtrs.size();
-    for (const auto& keyValue : m_settings.hkeyValueVector)
-        m_keys.hexKeysVector.push_back(TheKey(keyIndex++, keyValue));
+}
+void Dumper::AddKeyInVector(TheKey& key, std::vector<TheKey*, std::allocator<TheKey*>>& keysPtrs)
+{
+    if (!key.value.empty())
+    {
+        key.id = keysPtrs.size();
+        keysPtrs.push_back(& key);
+    }
 }
 
 void Dumper::ClearLine()
@@ -51,11 +53,11 @@ void Dumper::Generate(void* bufferVoid, const size_t bufferLength)
 
     utilities::PrintRange(m_settings.range, m_settings.shift, m_settings.showDetailed);
 
-    utilities::PrintKeysResults(m_keys, m_settings.showDetailed, m_settings.shift);
+//    utilities::PrintKeysResults(m_keys, m_settings.showDetailed, m_settings.shift);
 
-    for (auto& key : m_keys.hexKeysVector)
+    for (auto& key : m_keysPtrs) //m_keys.hexKeysVector)
     {
-        utilities::PrintFoundKeyResults(key, m_settings.showDetailed, m_settings.shift);
+        utilities::PrintFoundKeyResults(*key, m_settings.showDetailed, m_settings.shift);
     }
 }
 
@@ -137,18 +139,29 @@ uint8_t* Dumper::FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_
     if (m_settings.useRelativeAddress)
         buffer = ShiftBeginOfBufferAndResults(buffer, m_settings);
 
-    m_keys.key.results  = finder::FindIndexesForKey   (buffer, m_settings.range, m_keys.key);
+    m_keys.key.results  = finder::FindIndexesForKey(buffer, m_settings.range, m_keys.key);
+    std::cout << m_keys.key.value << " " << m_keys.key.results.size()  << "\n";
 
-    m_keys.hkey.results = finder::FindIndexesForHexKey(buffer, m_settings.range, m_keys.hkey);
+    AddKeyInVector(m_keys.hkeyFrom, m_keysPtrs);
+    AddKeyInVector(m_keys.hkeyTill, m_keysPtrs);
+    AddKeyInVector(m_keys.key,      m_keysPtrs);
 
-    for (auto& key : m_keys.hexKeysVector)
+    m_limitingKeysCount = m_keysPtrs.size();
+
+    for (const auto& keyValue : m_settings.hkeyValueVector)
     {
-        std::cout << "key.value:" << key.value << "\n";
-        key.results = finder::FindIndexesForHexKey(buffer, m_settings.range, key);
+        auto* key =  new TheKey(keyValue);
+        key->id = m_keysPtrs.size();
+        m_keysPtrs.push_back(key);
+    }
 
-        std::cout << "key.results.size:" << key.results.size()  << "\n";
+    for (const auto& key : m_keysPtrs)
+        std::cout << key->id << ", " << key->value << " " << key->results.size() << "\n";
 
-        m_keysPtrs.push_back(&key);
+    for (size_t index = m_limitingKeysCount; index < m_keysPtrs.size(); ++index)
+    {
+        auto& key = m_keysPtrs[index];
+        key->results = finder::FindIndexesForHexKey(buffer, m_settings.range, *key);
     }
 
     return buffer;
@@ -157,13 +170,10 @@ uint8_t* Dumper::FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_
 utilities::Color Dumper::GetColor(size_t index, const uint8_t currentValue) const
 {
     for (const auto* key : m_keysPtrs)
-    {
-//        std::cout << key->index << " " << key->value << " " << key->results.size() << "\n";
         if (!key->results.empty())
             for (const auto position : key->results)
                 if (index - position < key->length)
-                    return utilities::GetColorIndex(key->index);
-    }
+                    return utilities::GetColorIndex(key->id);
 
     if (currentValue == 0 && m_settings.printZeroAsGrey)
         return utilities::Color::Grey;
@@ -179,10 +189,6 @@ bool Dumper::IsLineSkipped(Range range)
     // TODO scroll
     for (auto keyPosition : m_keys.key.results)
         if (IsLineNearKeys(range, keyPosition, m_keys.key.length))
-            return false;
-
-    for (auto keyPosition : m_keys.hkey.results)
-        if (IsLineNearKeys(range, keyPosition, m_keys.hkey.length))
             return false;
 
     for (auto keyPosition : m_keys.hkeyFrom.results)
