@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include "finder.h"
 
 namespace utilities
 {
@@ -27,14 +28,14 @@ const StringVector ColorAnsiCode =
     "\033[0m"
 };
 
-Color GetColorIndex(const size_t colorIndex);
+Color GetColorIndex(size_t colorIndex);
 
 void PrintSeparator();
 
 void PrintEmptyLine(bool isPrint, size_t skippedLinesCount);
 
-void PrintFoundKeyResults(const SharedKey key, const bool useOffsetDetailedInfo, const size_t startOffset);
+void PrintFoundKeyResults(const finder::SharedKey& key, bool useOffsetDetailedInfo, size_t startOffset);
 
-void PrintRange(const Range range, const size_t shift, const bool detailed);
+void PrintRange(Range range, bool detailed, size_t shift);
 
 } // utilities

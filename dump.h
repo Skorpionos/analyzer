@@ -35,34 +35,33 @@ struct IsVisible
     bool next        = false;
 };
 
-class Ctx
-{
-public:
-    Line line {};
-    Range range = {0, 0};
-    bool previousLineWasSkipped = false;
-    size_t skipLinesCount = 0;
-
-    void Print(bool isOffsetVisible, bool isDumpVisible, bool isAsciiVisible, bool isCArray, bool isDebugVisible);
-};
-
 class Dumper
 {
 public:
     explicit Dumper(DumperSettings settings);
 
-    void Generate(void* bufferVoid, const size_t bufferLength);
+    void Generate(void* bufferVoid, size_t bufferLength);
 
     void SetSettings(DumperSettings settings);
 
     DumperSettings m_settings;
 
 private:
+    struct Ctx
+    {
+        Line line {};
+        Range range = {0, 0};
+        bool previousLineWasSkipped = false;
+        size_t skipLinesCount = 0;
+
+        void Print(const DumperSettings::IsShow& isShow, bool isArray);
+    };
+
     Ctx m_ctx;
 
-    SomeKeys m_someKeys;
+    finder::SomeKeys m_someKeys;
 
-    SharedKeysVector m_keys = {};
+    finder::SharedKeysVector m_keys = {};
 
 private:
 
@@ -71,20 +70,21 @@ private:
 
     void PrepareFirstLine(size_t index);
     void PrintLineAndIntend(size_t index);
-    void PrintAndClearLine(const bool isNewGroupAfterSkippedLines);
+    void PrintAndClearLine(bool isNewGroupAfterSkippedLines);
     void CompleteCurrentDumpLine();
 
-    std::string GetSpacesForBeginOfDumpLine (const size_t positionInLine) const;
+    std::string GetSpacesForBeginOfDumpLine (size_t positionInLine) const;
 
-    std::string GetSpacesForBeginOfAsciiLine(const size_t positionInLine);
-    std::string GetSpacesForRestOfDumpLine  (const size_t positionInLine) const;
-    void AppendCurrentDumpLine (const uint8_t* buffer, size_t index, utilities::Color currentColor);
-    void AppendCurrentAsciiLine(const uint8_t* buffer, size_t index, const IsVisible& isVisible, utilities::Color currentColor);
-    std::string GetOffsetFromIndex(size_t i) const;
+    std::string GetSpacesForBeginOfAsciiLine(size_t positionInLine);
+    std::string GetSpacesForRestOfDumpLine  (size_t positionInLine) const;
+    void AppendCurrentDumpLine(uint8_t dumpByte, size_t index, utilities::Color currentColor);
+    void AppendCurrentAsciiLine(uint8_t dumpByte, size_t index, const IsVisible& isVisible,
+                                    utilities::Color currentColor);
+    std::string GetOffset(size_t i) const;
 
-    std::string GetDumpValue(uint8_t value) const;
+    std::string GetDumpValueSymbol(uint8_t value) const;
 
-    IsVisible IsCharVisible(const uint8_t* buffer, const size_t index) const;
+    IsVisible IsCharVisible(const uint8_t* buffer, size_t index) const;
     bool IsNextWordStart(size_t index, const IsVisible& isVisible) const;
     size_t PositionInLine(size_t index) const;
 
@@ -92,13 +92,13 @@ private:
     bool IsEndOfCurrentLine(size_t index) const;
     uint8_t* ShiftBeginOfBufferAndResults(uint8_t* buffer, DumperSettings& settings);
 
-    utilities::Color GetColor(size_t index, const uint8_t currentValue) const;
+    utilities::Color GetColor(size_t index, uint8_t currentValue) const;
 
     bool IsLineSkipped(Range range);
     bool IsLineNearKeys(const Range& range, size_t position, size_t keySize) const;
 
-    uint8_t* FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_t* buffer);
-    void AddKeyInVector(TheKey& key, SharedKeysVector& keysPtrs);
+    uint8_t* FindKeysAndShiftStartOfBuffer(size_t bufferLength, uint8_t* buffer);
+    void AddKeyInVector(finder::Key& key, finder::SharedKeysVector& keysPtrs);
 };
 
 }; // namespace dump

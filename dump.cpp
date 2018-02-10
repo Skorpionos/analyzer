@@ -1,6 +1,4 @@
-#include <set>
 #include "dump.h"
-#include "finder.h"
 
 namespace dump
 {
@@ -23,14 +21,14 @@ void Dumper::SetSettings(DumperSettings settings)
 void Dumper::ClearLine()
 {
     m_ctx.line = Line();
-    if (m_settings.isCArray)
+    if (m_settings.isArray)
     {
         m_ctx.line.offset = "//";
         m_ctx.line.ascii  = "// ";
     }
 }
 
-void Dumper::Generate(void* bufferVoid, const size_t bufferLength)
+void Dumper::Generate(void* bufferVoid, size_t bufferLength)
 {
     auto buffer = static_cast<uint8_t*>(bufferVoid);
 
@@ -42,10 +40,10 @@ void Dumper::Generate(void* bufferVoid, const size_t bufferLength)
 
     utilities::PrintSeparator();
 
-    utilities::PrintRange(m_settings.range, m_settings.shift, m_settings.showDetailed);
+    utilities::PrintRange(m_settings.range, m_settings.isShowDetail, m_settings.shift);
 
     for (const auto& key : m_keys)
-        utilities::PrintFoundKeyResults(key, m_settings.showDetailed, m_settings.shift);
+        utilities::PrintFoundKeyResults(key, m_settings.isShowDetail, m_settings.shift);
 }
 
 void Dumper::GenerateImpl(uint8_t* buffer)
@@ -53,30 +51,28 @@ void Dumper::GenerateImpl(uint8_t* buffer)
 //    std::string currentWord;
     IsVisible charIsVisible;
 
-    if (m_settings.isCArray)
-        std::cout << "{\n";
-
-    if (PositionInLine(m_settings.range.begin) != 0)
-        PrepareFirstLine(m_settings.range.begin);
+    PrepareFirstLine(m_settings.range.begin);
 
     for (size_t index = m_settings.range.begin; index <= m_settings.range.end; ++index)
     {
         if (PositionInLine(index) == 0)
         {
             m_ctx.range.begin = index;
-            m_ctx.line.offset.append(GetOffsetFromIndex(index));
+            m_ctx.line.offset.append(GetOffset(index));
         }
 
         charIsVisible = IsCharVisible(buffer, index);
 
-        if (IsNextWordStart(index, charIsVisible) && m_settings.newLine)
+        if (IsNextWordStart(index, charIsVisible) && m_settings.useNewLine)
             PrintLineAndIntend(index);
 
-        utilities::Color currentColor = GetColor(index, buffer[index]);
+        const auto currentByte = buffer[index];
+        
+        utilities::Color currentColor = GetColor(index, currentByte);
 
-        AppendCurrentDumpLine(buffer, index, currentColor);
+        AppendCurrentDumpLine(currentByte, index, currentColor);
 
-        AppendCurrentAsciiLine(buffer, index, charIsVisible, currentColor);
+        AppendCurrentAsciiLine(currentByte, index, charIsVisible, currentColor);
 
         m_ctx.range.end = index;
 
@@ -100,7 +96,7 @@ void Dumper::GenerateImpl(uint8_t* buffer)
             m_ctx.previousLineWasSkipped = currentLineIsSkipped;
         }
     }
-    if (m_settings.isCArray)
+    if (m_settings.isArray)
         std::cout << "};\n";
 }
 
@@ -133,10 +129,7 @@ uint8_t* Dumper::FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_
 
     // add keys
     for (const auto& keyValue : m_settings.keyValues)
-    {
-        const auto index = m_keys.size();
-        m_keys.push_back(std::make_shared<TheKey>(index, keyValue));
-    }
+        m_keys.push_back(std::make_shared<finder::Key>(m_keys.size(), keyValue));
 
     //find keys
     for (size_t index = m_limitingKeysCount; index < m_keys.size(); ++index)
@@ -148,10 +141,7 @@ uint8_t* Dumper::FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_
 
     // add hex keys
     for (const auto& hkeyValue : m_settings.hkeyValues)
-    {
-        const auto currentIndex = m_keys.size();
-        m_keys.push_back(std::make_shared<TheKey>(currentIndex, hkeyValue));
-    }
+        m_keys.push_back(std::make_shared<finder::Key>(m_keys.size(), hkeyValue));
 
     // find hex keys
     for (size_t index = m_limitingAndUsualKeysCount; index < m_keys.size(); ++index)
@@ -163,12 +153,12 @@ uint8_t* Dumper::FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_
     return buffer;
 }
 
-void Dumper::AddKeyInVector(TheKey& key, SharedKeysVector& keysPtrs)
+void Dumper::AddKeyInVector(finder::Key& key, finder::SharedKeysVector& keysPtrs)
 {
     if (!key.value.empty())
     {
         key.id = keysPtrs.size();
-        keysPtrs.push_back(std::make_shared<TheKey>(key));
+        keysPtrs.push_back(std::make_shared<finder::Key>(key));
     }
 }
 
@@ -231,27 +221,33 @@ void Dumper::CompleteCurrentDumpLine()
 
 void Dumper::PrepareFirstLine(size_t index) // Actual for --shift=true
 {
-    m_ctx.line.offset += GetOffsetFromIndex(index);
+    if (m_settings.isArray)
+        std::cout << "{\n";
+
+    if (PositionInLine(m_settings.range.begin) == 0)
+        return;
+
+    m_ctx.line.offset += GetOffset(index);
 
     const auto positionInLine = PositionInLine(index);
     m_ctx.line.dump   += GetSpacesForBeginOfDumpLine (positionInLine);
     m_ctx.line.ascii  += GetSpacesForBeginOfAsciiLine(positionInLine);
 }
 
-void Dumper::AppendCurrentDumpLine(const uint8_t* buffer, const size_t index, utilities::Color currentColor)
+void Dumper::AppendCurrentDumpLine(uint8_t dumpByte, const size_t index, utilities::Color currentColor)
 {
     if (currentColor != utilities::Color::Normal)
         m_ctx.line.dump.append(utilities::ColorAnsiCode[currentColor]);
 
-    m_ctx.line.dump.append(GetDumpValue(buffer[index]));
+    m_ctx.line.dump.append(GetDumpValueSymbol(dumpByte));
 
     if (currentColor != utilities::Color::Normal)
         m_ctx.line.dump.append(utilities::ColorAnsiCode[utilities::Color::Normal]);
 
-    if (m_settings.isCArray && index < m_settings.range.end)
+    if (m_settings.isArray && index < m_settings.range.end)
         m_ctx.line.dump.append(",");
 
-    if (m_settings.isCArray && index == m_settings.range.end)
+    if (m_settings.isArray && index == m_settings.range.end)
         m_ctx.line.dump.append(" ");
 
     m_ctx.line.dump.append(" ");
@@ -263,14 +259,14 @@ void Dumper::AppendCurrentDumpLine(const uint8_t* buffer, const size_t index, ut
         m_ctx.line.dump.append(GetSpacesForRestOfDumpLine(PositionInLine(index)));
 }
 
-void Dumper::AppendCurrentAsciiLine(const uint8_t* buffer, size_t index, const IsVisible& isVisible, utilities::Color currentColor)
+void Dumper::AppendCurrentAsciiLine(uint8_t dumpByte, size_t index, const IsVisible& isVisible, utilities::Color currentColor)
 {
     if (currentColor != utilities::Color::Normal)
         m_ctx.line.ascii.append(utilities::ColorAnsiCode[currentColor]);
 
     if (isVisible.current)
     {
-        m_ctx.line.ascii += static_cast<char>(buffer[index]);
+        m_ctx.line.ascii += static_cast<char>(dumpByte);
 //        currentWord += buffer[index];
     }
     else
@@ -281,7 +277,7 @@ void Dumper::AppendCurrentAsciiLine(const uint8_t* buffer, size_t index, const I
         }
         else
         {
-            if (buffer[index] == 0)
+            if (dumpByte == 0)
                 m_ctx.line.ascii += m_settings.zeroPlaceHolder;
             else
                 m_ctx.line.ascii += m_settings.placeHolder;
@@ -302,7 +298,7 @@ void Dumper::PrintLineAndIntend(size_t index)
         m_ctx.line.dump.append(m_ctx.line.indent);
     PrintAndClearLine(false);
 
-    m_ctx.line.offset = GetOffsetFromIndex(index);
+    m_ctx.line.offset = GetOffset(index);
     m_ctx.line.indent = GetSpacesForBeginOfDumpLine(PositionInLine(index));
     if (m_settings.ladder)
         m_ctx.line.dump.append(m_ctx.line.indent);
@@ -332,11 +328,11 @@ IsVisible Dumper::IsCharVisible(const uint8_t* buffer, const size_t index) const
     return isVisible;
 }
 
-std::string Dumper::GetDumpValue(uint8_t value) const
+std::string Dumper::GetDumpValueSymbol(uint8_t value) const
 {
     std::string dumpValueStr;
 
-    if (m_settings.isCArray)
+    if (m_settings.isArray)
         dumpValueStr.append("0x");
 
     const auto dumpValue = boost::format("%02x") % static_cast<uint16_t>(value);
@@ -366,7 +362,7 @@ std::string Dumper::GetSpacesForBeginOfDumpLine(const size_t positionInLine) con
     if (m_settings.isSpaceBetweenDumpBytes)
         lengthOfBeginOfLine += positionInLine / m_settings.bytesInGroup;
 
-    if (m_settings.isCArray)
+    if (m_settings.isArray)
         lengthOfBeginOfLine += dump::size::AdditionalCharsForCArray * positionInLine;
 
     std::string spaces(lengthOfBeginOfLine, ' ');
@@ -394,7 +390,7 @@ std::string Dumper::GetSpacesForRestOfDumpLine(const size_t positionInLine) cons
     if (m_settings.isSpaceBetweenDumpBytes)
         lengthOfRestLine += (restBytesInLine + m_settings.bytesInGroup - 1) / m_settings.bytesInGroup;
 
-    if (m_settings.isCArray)
+    if (m_settings.isArray)
         lengthOfRestLine += dump::size::AdditionalCharsForCArray * restBytesInLine;
 
     std::string spaces(lengthOfRestLine, ' ');
@@ -403,7 +399,7 @@ std::string Dumper::GetSpacesForRestOfDumpLine(const size_t positionInLine) cons
 }
 
 
-std::string Dumper::GetOffsetFromIndex(size_t i) const
+std::string Dumper::GetOffset(size_t i) const
 {
     std::string result;
 
@@ -412,10 +408,10 @@ std::string Dumper::GetOffsetFromIndex(size_t i) const
         if (m_settings.shift)
             result += (boost::format("%5d") % i).str();
 
-        if (m_settings.shift && m_settings.showDetailed)
+        if (m_settings.shift && m_settings.isShowDetail)
             result += "/";
 
-        if (m_settings.showDetailed || !m_settings.shift)
+        if (m_settings.isShowDetail || !m_settings.shift)
             result += (boost::format("%5d") % (m_settings.shift + i)).str();
     }
 
@@ -427,10 +423,10 @@ std::string Dumper::GetOffsetFromIndex(size_t i) const
         if (m_settings.shift)
             result += (boost::format("0x%04x") % (i)).str();
 
-        if (m_settings.shift && m_settings.showDetailed)
+        if (m_settings.shift && m_settings.isShowDetail)
             result += "/";
 
-        if (m_settings.showDetailed || !m_settings.shift)
+        if (m_settings.isShowDetail || !m_settings.shift)
             result += (boost::format("0x%04x") % (m_settings.shift + i)).str();
     }
 
@@ -440,25 +436,6 @@ std::string Dumper::GetOffsetFromIndex(size_t i) const
     return result;
 }
 
-void Ctx::Print(bool isOffsetVisible, bool isDumpVisible, bool isAsciiVisible, bool isCArray, bool isDebugVisible)
-{
-    if (isOffsetVisible && !isCArray)
-        std::cout << line.offset;
-
-    if (isDumpVisible)
-        std::cout << line.dump;
-
-    if (isOffsetVisible && isCArray)
-        std::cout << line.offset;
-
-    if (isAsciiVisible)
-        std::cout << line.ascii;
-
-    if (isDebugVisible)
-        std::cout << "\t" << line.debug;
-
-    std::cout << std::endl;
-}
 
 void Dumper::PrintAndClearLine(const bool isNewGroupAfterSkippedLines)
 {
@@ -467,13 +444,28 @@ void Dumper::PrintAndClearLine(const bool isNewGroupAfterSkippedLines)
 
     m_ctx.line.debug = "<" + std::to_string(m_ctx.range.begin) + "..." + std::to_string(m_ctx.range.end) + "> ";
 
-    m_ctx.Print(m_settings.isShowOffset,
-            m_settings.isShowDump,
-            m_settings.isShowAscii,
-            m_settings.isCArray,
-            m_settings.isShowDebug);
+    m_ctx.Print(m_settings.isShow, m_settings.isArray);
 
     ClearLine();
 }
 
+void Dumper::Ctx::Print(const DumperSettings::IsShow& isShow, bool isArray)
+{
+    if (isShow.offset && !isArray)
+        std::cout << line.offset;
+
+    if (isShow.dump)
+        std::cout << line.dump;
+
+    if (isShow.offset && isArray)
+        std::cout << line.offset;
+
+    if (isShow.ascii)
+        std::cout << line.ascii;
+
+    if (isShow.debug)
+        std::cout << "\t" << line.debug;
+
+    std::cout << std::endl;
+}
 } // namespace dump

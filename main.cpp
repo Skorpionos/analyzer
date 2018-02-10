@@ -15,7 +15,7 @@ int main(int argc, const char* const* argv)
 
     size_t size = 0;
 
-    files_operations::ReadBuffer(fileName, & buffer, size);
+    files_operations::ReadBuffer(fileName, &buffer, size);
 
     dump::Dumper dumper(settings);
 

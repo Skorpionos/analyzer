@@ -1,4 +1,5 @@
 #include "dumper_settings.h"
+
 namespace dump
 {
 

@@ -8,7 +8,7 @@ void PrintSeparator()
     std::cout << "================================" << std::endl;
 }
 
-void PrintRange(const Range range, const size_t shift, const bool detailed)
+void PrintRange(Range range, bool detailed, size_t shift)
 {
     std::cout << "address <";
     std::cout << range.begin;
@@ -33,7 +33,7 @@ void PrintEmptyLine(bool isPrint, size_t skippedLinesCount)
     std::cout << "\n";
 }
 
-void PrintFoundKeyResults(const SharedKey key, const bool useDetailedInfo, const size_t startOffset)
+void PrintFoundKeyResults(const finder::SharedKey& key, const bool useDetailedInfo, const size_t startOffset)
 {
     if (key->value.empty())
         return;

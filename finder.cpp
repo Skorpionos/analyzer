@@ -3,7 +3,7 @@
 namespace finder
 {
 
-SizeVector FindIndexesForKey(const uint8_t* buffer, const Range range, TheKey& key)
+SizeVector FindIndexesForKey(const uint8_t* buffer, const Range range, Key& key)
 {
     if (key.value.empty())
         return SizeVector();
@@ -17,12 +17,10 @@ SizeVector FindIndexesForKey(const uint8_t* buffer, const Range range, TheKey& k
     return FindIndexesForBytesKey(buffer, range, keyBytesVector);
 }
 
-SizeVector FindIndexesForHexKey(const uint8_t* buffer, const Range range, TheKey& hexKey)
+SizeVector FindIndexesForHexKey(const uint8_t* buffer, const Range range, Key& hexKey)
 {
     if (hexKey.value.empty())
         return SizeVector();
-
-    std::cout << hexKey.value << " " << hexKey.id << "\n";
 
     StringVector tokens;
     split(tokens, hexKey.value, boost::algorithm::is_any_of(" "));
@@ -78,7 +76,7 @@ SizeVector FindIndexesForBytesKey(const uint8_t* buffer, const Range range, cons
     return resultIndexes;
 }
 
-Range FindRangeForPairOfKeys(uint8_t* buffer, const Range range, TheKey& hexKeyFrom, TheKey& hexKeyTill)
+Range FindRangeForPairOfKeys(uint8_t* buffer, const Range range, Key& hexKeyFrom, Key& hexKeyTill)
 {
     hexKeyFrom.results = FindIndexesForHexKey(buffer, range, hexKeyFrom);
     hexKeyTill.results = FindIndexesForHexKey(buffer, range, hexKeyTill);

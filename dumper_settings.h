@@ -22,15 +22,22 @@ OffsetTypes GetOffsetType(const std::string& offset);
 
 struct DumperSettings
 {
-    bool isShowOffset = true;
-    bool isShowDump = true;
-    bool isShowAscii = true;
-    bool isShowDebug = false;
+    struct IsShow
+    {
+        bool offset = true;
+        bool dump = true;
+        bool ascii = true;
+        bool debug = false;
+    };
+
+    IsShow isShow;
+
+    bool isShowDetail = false;
+
     bool isSpaceBetweenAsciiBytes = false;
     bool isSpaceBetweenDumpBytes = true;
 
     OffsetTypes offset = OffsetTypes::Dec;
-    bool showDetailed = false;
 
     char placeHolder = '-';
     char zeroPlaceHolder = '.';
@@ -38,16 +45,16 @@ struct DumperSettings
 
     Range range = {0, 0};
 
-    unsigned long shift = range.begin;
+    size_t shift = range.begin;
 
-    unsigned long countBytesBeforeKey = defaultvalues::BytesCountBeforeKey;
-    unsigned long countBytesAfterKey = defaultvalues::BytesCountAfterKey;
-    unsigned long columnCount = defaultvalues::ColumnCountDefault;
-    unsigned long bytesInGroup = defaultvalues::BytesCountInGroup;
-    unsigned long bytesInLine = columnCount * bytesInGroup;
+    size_t countBytesBeforeKey  = defaultvalues::BytesCountBeforeKey;
+    size_t countBytesAfterKey   = defaultvalues::BytesCountAfterKey;
+    size_t columnCount          = defaultvalues::ColumnCountDefault;
+    size_t bytesInGroup         = defaultvalues::BytesCountInGroup;
+    size_t bytesInLine= columnCount * bytesInGroup;
 
-    bool isCArray = false;
-    bool newLine = false;
+    bool isArray = false;
+    bool useNewLine = false;
     bool useWideChar = false;
     bool ladder = false;
     bool useRelativeAddress = false;
@@ -60,7 +67,7 @@ struct DumperSettings
     StringVector hkeyValues;
     StringVector keyValues;
 
-    unsigned long countBytesAfterHkeyFrom = 0;
+    size_t countBytesAfterHkeyFrom = 0;
     bool printZeroAsGrey = true;
 };
 

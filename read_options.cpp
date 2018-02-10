@@ -17,19 +17,19 @@ bool ReadOptions(int argc, const char* const* argv, std::string& fileName, dump:
         ("group",     po::value(&settings.columnCount),              "number of groups")
         ("bytes",     po::value(&settings.bytesInGroup),             "number of bytes in one group")
         ("offset",    po::value(&addressType),                       "offset format (hex, dec, both, none)")
-        ("detail",    po::value(&settings.showDetailed),             "detailed format for offset (actual for --shift=true)")
-        ("dump",      po::value(&settings.isShowDump),               "show dump column")
-        ("asc",       po::value(&settings.isShowAscii),              "show ascii column")
-        ("debug",     po::value(&settings.isShowDebug),              "show debug information")
+        ("detail",    po::value(&settings.isShowDetail),             "detailed format for offset (actual for --shift=true)")
+        ("dump",      po::value(&settings.isShow.dump),               "show dump column")
+        ("asc",       po::value(&settings.isShow.ascii),              "show ascii column")
+        ("debug",     po::value(&settings.isShow.debug),              "show debug information")
         ("space",     po::value(&settings.isSpaceBetweenAsciiBytes), "set space between ascii groups")
         ("spacedump", po::value(&settings.isSpaceBetweenDumpBytes),  "set space between dump groups")
         ("char",      po::value(&settings.placeHolder),              "placeholder for non visible symbols")
         ("zero",      po::value(&settings.zeroPlaceHolder),          "placeholder for zero")
         ("widechar",  po::value(&settings.widePlaceHolder),          "placeholder for invisible symbols in wide-char words")
         ("wide",      po::value(&settings.useWideChar),              "use wide-char mode for words")
-        ("array",     po::value(&settings.isCArray),                 "generate c-array (0x00, ...)")
+        ("array",     po::value(&settings.isArray),                 "generate c-array (0x00, ...)")
         ("ladder",    po::value(&settings.ladder),                   "use intend for separate words")
-        ("newline",   po::value(&settings.newLine),                  "every visible word starts with new line")
+        ("newline",   po::value(&settings.useNewLine),                  "every visible word starts with new line")
         ("shift",     po::value(&settings.useRelativeAddress),       "choose true for use --begin as offset=0")
         ("key",       po::value<StringVector>(&settings.keyValues)->multitoken(),
                                                                      "find key(s) (string value)")
@@ -58,13 +58,13 @@ bool ReadOptions(int argc, const char* const* argv, std::string& fileName, dump:
             std::cout << desc << "\n";
             return false;
         }
-        settings.isShowOffset = settings.offset != dump::OffsetTypes::None;
+        settings.isShow.offset = settings.offset != dump::OffsetTypes::None;
 
         if (!vm.count("end"))
             settings.range.end = vm.count("size") ? settings.range.begin + bufferSize - 1
                                                   : std::numeric_limits<size_t>::max();
 
-        if (settings.newLine || settings.ladder)
+        if (settings.useNewLine || settings.ladder)
             settings.isSpaceBetweenDumpBytes = false;
 
         fileName = argv[1];
