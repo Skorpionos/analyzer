@@ -1,3 +1,7 @@
+for (const auto key : m_vectorOfSharedKeys)
+    std::cout << key->id << ", " << key->value << " " << key->results.size() << "\n";
+
+
 void saveToFile(const char* fileName, uint8_t buffer[], size_t size)
 {
     std::fstream file(fileName, std::ios::binary | std::ios::out);

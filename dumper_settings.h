@@ -54,12 +54,11 @@ struct DumperSettings
     bool skipTextWithoutKeys = false;
     bool isShowEmptyLines = true;
 
-    std::string key;
-    std::string hkey;
     std::string hkeyFrom;
     std::string hkeyTill;
 
-    StringVector hkeyValueVector;
+    StringVector hkeyValues;
+    StringVector keyValues;
 
     unsigned long countBytesAfterHkeyFrom = 0;
     bool printZeroAsGrey = true;

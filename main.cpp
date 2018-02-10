@@ -2,7 +2,7 @@
 #include "file_operations.h"
 #include "read_options.h"
 
-int main(int argc, char* argv[])
+int main(int argc, const char* const* argv)
 {
     dump::DumperSettings settings;
 

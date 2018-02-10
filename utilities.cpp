@@ -33,15 +33,15 @@ void PrintEmptyLine(bool isPrint, size_t skippedLinesCount)
     std::cout << "\n";
 }
 
-void PrintFoundKeyResults(const TheKey& key, const bool useDetailedInfo, const size_t startOffset)
+void PrintFoundKeyResults(const SharedKey key, const bool useDetailedInfo, const size_t startOffset)
 {
-    if (key.value.empty())
+    if (key->value.empty())
         return;
 
-    std::cout << "for key '" << ColorAnsiCode[GetColorIndex(key.id)] << key.value << ColorAnsiCode[Color::Normal];
-    std::cout << "' found " << key.results.size() << " results: ";
+    std::cout << "for key '" << ColorAnsiCode[GetColorIndex(key->id)] << key->value << ColorAnsiCode[Color::Normal];
+    std::cout << "' found " << key->results.size() << " results: ";
 
-    for (const size_t& index : key.results)
+    for (const size_t& index : key->results)
     {
         std::cout << index;
         if (startOffset != 0 && useDetailedInfo)
@@ -49,13 +49,6 @@ void PrintFoundKeyResults(const TheKey& key, const bool useDetailedInfo, const s
         std::cout << " ";
     }
     std::cout << "\n";
-}
-
-void PrintKeysResults(const SomeKeys& keys, const bool showDetailed, const size_t shift)
-{
-    PrintFoundKeyResults(keys.hkeyFrom, showDetailed, shift);
-    PrintFoundKeyResults(keys.hkeyTill, showDetailed, shift);
-    PrintFoundKeyResults(keys.key, showDetailed, shift);
 }
 
 Color GetColorIndex(const size_t colorIndex)

@@ -60,10 +60,9 @@ public:
 private:
     Ctx m_ctx;
 
-    SomeKeys m_keys;
+    SomeKeys m_someKeys;
 
-    std::vector<TheKey*> m_keysPtrs = {};
-    size_t m_limitingKeysCount = 0;
+    SharedKeysVector m_keys = {};
 
 private:
 
@@ -99,7 +98,7 @@ private:
     bool IsLineNearKeys(const Range& range, size_t position, size_t keySize) const;
 
     uint8_t* FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_t* buffer);
-    void AddKeyInVector(TheKey& key, std::vector<TheKey*, std::allocator<TheKey*>>& keysPtrs);
+    void AddKeyInVector(TheKey& key, SharedKeysVector& keysPtrs);
 };
 
 }; // namespace dump

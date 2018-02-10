@@ -10,6 +10,7 @@ filter for ip.addr, ip.src, ip.dst
 search
 =======
 wide char search
+extract whole words
 shift search (+ cycle)
 xor search (+ cycle)
 
@@ -21,3 +22,5 @@ find headers (as combination of identical sequence and iterators)
 
 bugs
 ****
+-1111-2222-only.pcap --key="SFC" "MAIN" "QPG" --hkey="91 91 91 91" "92 92 92 92" --key=Q02HCPU --newline=true
+(extra line)

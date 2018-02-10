@@ -8,6 +8,6 @@
 namespace command_line
 {
 
-bool ReadOptions(int argc, char** argv, std::string& fileName, dump::DumperSettings& settings);
+bool ReadOptions(int argc, const char* const* argv, std::string& fileName, dump::DumperSettings& settings);
 
 } // command_line

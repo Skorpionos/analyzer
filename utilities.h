@@ -33,10 +33,8 @@ void PrintSeparator();
 
 void PrintEmptyLine(bool isPrint, size_t skippedLinesCount);
 
-void PrintFoundKeyResults(const TheKey& key, const bool useOffsetDetailedInfo, const size_t startOffset);
+void PrintFoundKeyResults(const SharedKey key, const bool useOffsetDetailedInfo, const size_t startOffset);
 
 void PrintRange(const Range range, const size_t shift, const bool detailed);
-
-void PrintKeysResults(const SomeKeys& keys, const bool showDetailed, const size_t shift);
 
 } // utilities
