@@ -13,8 +13,8 @@ void Dumper::SetSettings(DumperSettings settings)
 {
     m_settings = std::move(settings);
 
-    m_someKeys.hkeyFrom.value = m_settings.hkeyFrom;
-    m_someKeys.hkeyTill.value = m_settings.hkeyTill;
+//    m_rangeHKeys.from.value = m_settings.hkeyFrom;
+//    m_rangeHKeys.till.value = m_settings.hkeyTill;
 
 }
 
@@ -108,58 +108,47 @@ uint8_t* Dumper::FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_
         m_settings.range.end = bufferLength - 1;
     }
 
-    if (!m_someKeys.hkeyFrom.value.empty() || !m_someKeys.hkeyTill.value.empty())
+    finder::HexKeyFinder hexKeyFinder;
+
+    m_settings.range = hexKeyFinder.FindRange(buffer, m_settings.range, m_settings.hkeyFrom, m_settings.hkeyTill);
+
+    if (m_settings.countBytesAfterHkeyFrom != 0)
     {
-        m_settings.range = finder::FindRangeForPairOfKeys(buffer, m_settings.range, m_someKeys.hkeyFrom, m_someKeys.hkeyTill);
-        if (m_settings.countBytesAfterHkeyFrom != 0)
-        {
-            const size_t expectedEnd = m_settings.range.begin + m_settings.countBytesAfterHkeyFrom - 1;
-            if (expectedEnd < m_settings.range.end)
-                m_settings.range.end = expectedEnd;
-        }
+        const size_t expectedEnd = m_settings.range.begin + m_settings.countBytesAfterHkeyFrom - 1;
+        if (expectedEnd < m_settings.range.end)
+            m_settings.range.end = expectedEnd;
     }
 
     if (m_settings.useRelativeAddress)
         buffer = ShiftBeginOfBufferAndResults(buffer, m_settings);
 
-    AddKeyInVector(m_someKeys.hkeyFrom, m_keys);
-    AddKeyInVector(m_someKeys.hkeyTill, m_keys);
+    // add --from and --till
+    AddKeyInVector(m_settings.hkeyFrom, m_keys);
+    AddKeyInVector(m_settings.hkeyTill, m_keys);
 
-    const size_t m_limitingKeysCount = m_keys.size();
-
-    // add keys
+    //add keys
     for (const auto& keyValue : m_settings.keyValues)
-        m_keys.push_back(std::make_shared<finder::Key>(m_keys.size(), keyValue));
-
-    //find keys
-    for (size_t index = m_limitingKeysCount; index < m_keys.size(); ++index)
-    {
-        auto key = m_keys[index];
-        key->results = finder::FindIndexesForKey(buffer, m_settings.range, *key);
-    }
-    const size_t m_limitingAndUsualKeysCount = m_keys.size();
+        m_keys.push_back(std::make_shared<finder::Key>(m_keys.size(), keyValue, std::make_shared<finder::KeyFinder>()));
 
     // add hex keys
     for (const auto& hkeyValue : m_settings.hkeyValues)
-        m_keys.push_back(std::make_shared<finder::Key>(m_keys.size(), hkeyValue));
+        AddKeyInVector(hkeyValue, m_keys);
 
-    // find hex keys
-    for (size_t index = m_limitingAndUsualKeysCount; index < m_keys.size(); ++index)
+    // search // TODO for :
+    for (size_t index = 0; index < m_keys.size(); ++index)
     {
-        auto hkey = m_keys[index];
-        hkey->results = finder::FindIndexesForHexKey(buffer, m_settings.range, *hkey);
+        auto key = m_keys[index];
+        key->results = key->Find(buffer, m_settings.range, *key);
     }
 
     return buffer;
 }
 
-void Dumper::AddKeyInVector(finder::Key& key, finder::SharedKeysVector& keysPtrs)
+void Dumper::AddKeyInVector(const std::string& keyValue, finder::SharedKeysVector& keysVector) const
 {
-    if (!key.value.empty())
-    {
-        key.id = keysPtrs.size();
-        keysPtrs.push_back(std::make_shared<finder::Key>(key));
-    }
+    if (keyValue.empty())
+        return;
+    keysVector.push_back(std::make_shared<finder::Key>(keysVector.size(), keyValue));
 }
 
 utilities::Color Dumper::GetColor(size_t index, const uint8_t currentValue) const
@@ -195,16 +184,18 @@ bool Dumper::IsLineNearKeys(const Range& range, size_t position, size_t keySize)
               (position <= range.end + m_settings.countBytesBeforeKey);
 }
 
-uint8_t* Dumper::ShiftBeginOfBufferAndResults(uint8_t* buffer, DumperSettings& settings)
+uint8_t* Dumper::ShiftBeginOfBufferAndResults(uint8_t* buffer, DumperSettings& settings) // TODO only range and shift
 {
-    if (!m_someKeys.hkeyFrom.results.empty())
-    {
-        const auto shift = m_someKeys.hkeyFrom.results.front();
-        for (auto& index : m_someKeys.hkeyFrom.results)
-            index -= shift;
-        for (auto& index : m_someKeys.hkeyTill.results)
-            index -= shift;
-    }
+//    if (!m_rangeHKeys.from.results.empty())
+//    {
+//        const auto shift = m_rangeHKeys.from.results.front();
+//        for (auto& index : m_rangeHKeys.from.results)
+//            index -= shift;
+//        for (auto& index : m_rangeHKeys.till.results)
+//            index -= shift;
+//    }
+//
+//    settings.shift = settings.range.begin;
 
     settings.shift = settings.range.begin;
     settings.range.begin = 0;

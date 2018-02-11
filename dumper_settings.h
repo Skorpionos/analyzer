@@ -43,6 +43,7 @@ struct DumperSettings
     char zeroPlaceHolder = '.';
     char widePlaceHolder = ' ';
 
+    // TODO use range in Ctx
     Range range = {0, 0};
 
     size_t shift = range.begin;

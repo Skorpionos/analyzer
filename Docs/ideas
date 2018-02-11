@@ -9,6 +9,7 @@ filter for ip.addr, ip.src, ip.dst
 
 search
 =======
+case
 wide char search
 extract whole words
 shift search (+ cycle)
@@ -24,3 +25,10 @@ bugs
 ****
 -1111-2222-only.pcap --key="SFC" "MAIN" "QPG" --hkey="91 91 91 91" "92 92 92 92" --key=Q02HCPU --newline=true
 (extra line)
+
+06.password-1111-2222-only.pcap --key="SFC" "MAIN" "QPG" --hkey="91 91 91 91" "92 92 92 92" --key="=7P" --from="04 00 01" --till="18 02 08"
+(not select --first in --shift)
+
+06.password-1111-2222-only.pcap  --begin=1550 --from=0
+
+find for last symbol

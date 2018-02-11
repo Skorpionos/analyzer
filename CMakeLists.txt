@@ -15,12 +15,10 @@ set(SOURCE_FILES
         utilities.cpp
         read_options.cpp
         read_options.h
-        finder.h
-        finder.cpp
         types.h
         dumper_settings.h
         dumper_settings.cpp
-        /usr/include/boost/program_options/options_description.hpp)
+        /usr/include/boost/program_options/options_description.hpp finder.cpp finder.h)
         add_executable(analyzer ${SOURCE_FILES})
 
 

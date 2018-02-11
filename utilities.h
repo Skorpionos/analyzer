@@ -16,7 +16,6 @@ enum Color
     Normal
 };
 
-constexpr size_t differentColorsCount = 4;
 
 const StringVector ColorAnsiCode =
 {
@@ -27,6 +26,7 @@ const StringVector ColorAnsiCode =
     "\033[1;30;40m",
     "\033[0m"
 };
+const size_t differentColorsCount = ColorAnsiCode.size() - 2;
 
 Color GetColorIndex(size_t colorIndex);
 

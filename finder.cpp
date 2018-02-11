@@ -3,32 +3,6 @@
 namespace finder
 {
 
-SizeVector FindIndexesForKey(const uint8_t* buffer, const Range range, Key& key)
-{
-    if (key.value.empty())
-        return SizeVector();
-
-    key.length = key.value.size();
-
-    const auto& keyBytes = reinterpret_cast<const uint8_t*>(key.value.c_str());
-
-    Uint8Vector keyBytesVector(keyBytes, keyBytes + key.value.size());
-
-    return FindIndexesForBytesKey(buffer, range, keyBytesVector);
-}
-
-SizeVector FindIndexesForHexKey(const uint8_t* buffer, const Range range, Key& hexKey)
-{
-    if (hexKey.value.empty())
-        return SizeVector();
-
-    StringVector tokens;
-    split(tokens, hexKey.value, boost::algorithm::is_any_of(" "));
-    hexKey.length = tokens.size();
-
-    return FindIndexesForBytesKey(buffer, range, GetHexBytesFromStringVector(tokens));
-}
-
 Uint8Vector GetHexBytesFromStringVector(const StringVector& words)
 {
     Uint8Vector hexKeyBytes;
@@ -45,8 +19,53 @@ Uint8Vector GetHexBytesFromStringVector(const StringVector& words)
     return hexKeyBytes;
 }
 
-// TODO use functions from standard library
-SizeVector FindIndexesForBytesKey(const uint8_t* buffer, const Range range, const Uint8Vector& keyBytes)
+Range Finder::FindRange(uint8_t* buffer, Range range, const std::string& hexFromValue, const std::string& hexTillValue)
+{
+    Range resultRange;
+
+    resultRange.begin = FindFirst(buffer, range, hexFromValue);
+    resultRange.end   = FindLast(buffer, range, hexTillValue);
+
+    return resultRange;
+}
+
+size_t Finder::FindFirstForBytesKey(const uint8_t* buffer, Range range, const Uint8Vector& keyBytes)
+{
+    auto index = std::search(buffer + range.begin, buffer + range.end + 1, std::begin(keyBytes), std::end(keyBytes));
+
+    return index - buffer;
+}
+
+size_t Finder::FindLastForBytesKey(const uint8_t* buffer, Range range, const Uint8Vector& keyBytes)
+{
+    const auto bufferBegin = buffer + range.begin;
+    const auto bufferEnd = buffer + range.end + 1;
+
+    auto index = std::find_end(bufferBegin, bufferEnd, std::begin(keyBytes), std::end(keyBytes));
+
+    auto result = index - buffer;
+
+    if (index != bufferEnd)
+        result += keyBytes.size() - 1;
+
+    return result;
+}
+
+SizeVector KeyFinder::Find(const uint8_t* buffer, Range range, Key& key)
+{
+    if (key.value.empty())
+        return SizeVector();
+
+    key.length = key.value.size();
+
+    const auto& keyBytes = reinterpret_cast<const uint8_t*>(key.value.c_str());
+
+    Uint8Vector keyBytesVector(keyBytes, keyBytes + key.value.size());
+
+    return KeyFinder::FindIndexesForBytesKey(buffer, range, keyBytesVector);
+}
+
+SizeVector Finder::FindIndexesForBytesKey(const uint8_t* buffer, Range range, const Uint8Vector& keyBytes)
 {
     SizeVector resultIndexes;
     const size_t keyLength = keyBytes.size();
@@ -76,16 +95,39 @@ SizeVector FindIndexesForBytesKey(const uint8_t* buffer, const Range range, cons
     return resultIndexes;
 }
 
-Range FindRangeForPairOfKeys(uint8_t* buffer, const Range range, Key& hexKeyFrom, Key& hexKeyTill)
+size_t HexKeyFinder::FindFirst(const uint8_t* buffer, Range range, std::string hexKeyValue)
 {
-    hexKeyFrom.results = FindIndexesForHexKey(buffer, range, hexKeyFrom);
-    hexKeyTill.results = FindIndexesForHexKey(buffer, range, hexKeyTill);
+    if (hexKeyValue.empty())
+        return range.begin;
 
-    Range resultRange;
-    resultRange.begin = hexKeyFrom.results.empty() ? range.begin : hexKeyFrom.results.front();
-    resultRange.end   = hexKeyTill.results.empty() ? range.end   : hexKeyTill.results.back() + hexKeyTill.length - 1;
+    StringVector tokens;
+    split(tokens, hexKeyValue, boost::algorithm::is_any_of(" "));
 
-    return resultRange;
+    return FindFirstForBytesKey(buffer, range, GetHexBytesFromStringVector(tokens));
+}
+
+size_t HexKeyFinder::FindLast(const uint8_t* buffer, Range range, std::string hexKeyValue)
+{
+    if (hexKeyValue.empty())
+        return range.end;
+
+    StringVector tokens;
+    split(tokens, hexKeyValue, boost::algorithm::is_any_of(" "));
+
+
+    return FindLastForBytesKey(buffer, range, GetHexBytesFromStringVector(tokens));
+}
+
+SizeVector HexKeyFinder::Find(const uint8_t* buffer, Range range, Key& hexKey)
+{
+    if (hexKey.value.empty())
+        return SizeVector();
+
+    StringVector tokens;
+    split(tokens, hexKey.value, boost::algorithm::is_any_of(" "));
+    hexKey.length = tokens.size();
+
+    return FindIndexesForBytesKey(buffer, range, GetHexBytesFromStringVector(tokens));
 }
 
 } // namespace finder

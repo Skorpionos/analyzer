@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dumper_settings.h"
+#include "finder.h"
 #include "utilities.h"
 
 #include <boost/algorithm/string/split.hpp>
@@ -59,7 +60,7 @@ private:
 
     Ctx m_ctx;
 
-    finder::SomeKeys m_someKeys;
+//    finder::RangeKeys m_rangeHKeys;
 
     finder::SharedKeysVector m_keys = {};
 
@@ -98,7 +99,8 @@ private:
     bool IsLineNearKeys(const Range& range, size_t position, size_t keySize) const;
 
     uint8_t* FindKeysAndShiftStartOfBuffer(size_t bufferLength, uint8_t* buffer);
-    void AddKeyInVector(finder::Key& key, finder::SharedKeysVector& keysPtrs);
+
+    void AddKeyInVector(const std::string& keyValue, finder::SharedKeysVector& keysVector) const;
 };
 
 }; // namespace dump

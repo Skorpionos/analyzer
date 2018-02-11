@@ -3,6 +3,11 @@
 namespace utilities
 {
 
+Color GetColorIndex(const size_t colorIndex)
+{
+    return static_cast<Color>(colorIndex % differentColorsCount);
+}
+
 void PrintSeparator()
 {
     std::cout << "================================" << std::endl;
@@ -51,9 +56,6 @@ void PrintFoundKeyResults(const finder::SharedKey& key, const bool useDetailedIn
     std::cout << "\n";
 }
 
-Color GetColorIndex(const size_t colorIndex)
-{
-    return static_cast<Color>(colorIndex % differentColorsCount);
-}
+
 
 } // utilities
