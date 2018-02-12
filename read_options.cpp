@@ -37,6 +37,7 @@ bool ReadOptions(int argc, const char* const* argv, std::string& fileName, dump:
                                                                      "find key(s) (hex values)")
         ("from",      po::value(&settings.hkeyFrom),                 "begin from first key (hex value)")
         ("till",      po::value(&settings.hkeyTill),                 "finish with last key (hex value)")
+        ("hbreak",    po::value(&settings.hkeyBreak),                "break lines by key (hex value)")
         ("skip",      po::value(&settings.skipTextWithoutKeys),      "skip lines where key is absent")
         ("empty",     po::value(&settings.isShowEmptyLines),         "show empty lines (as ...)")
         ("before",    po::value(&settings.countBytesBeforeKey),      "count lines before key (for skip mode)")

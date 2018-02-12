@@ -33,7 +33,7 @@ size_t Finder::FindFirstForBytesKey(const uint8_t* buffer, Range range, const Ui
 {
     auto index = std::search(buffer + range.begin, buffer + range.end + 1, std::begin(keyBytes), std::end(keyBytes));
 
-    return index - buffer;
+    return static_cast<size_t>(index - buffer);
 }
 
 size_t Finder::FindLastForBytesKey(const uint8_t* buffer, Range range, const Uint8Vector& keyBytes)
@@ -43,12 +43,10 @@ size_t Finder::FindLastForBytesKey(const uint8_t* buffer, Range range, const Uin
 
     auto index = std::find_end(bufferBegin, bufferEnd, std::begin(keyBytes), std::end(keyBytes));
 
-    auto result = index - buffer;
+    if (index == bufferEnd)
+        return range.end;
 
-    if (index != bufferEnd)
-        result += keyBytes.size() - 1;
-
-    return result;
+    return static_cast<size_t>(index - buffer + keyBytes.size() - 1);
 }
 
 SizeVector KeyFinder::Find(const uint8_t* buffer, Range range, Key& key)
@@ -67,32 +65,18 @@ SizeVector KeyFinder::Find(const uint8_t* buffer, Range range, Key& key)
 
 SizeVector Finder::FindIndexesForBytesKey(const uint8_t* buffer, Range range, const Uint8Vector& keyBytes)
 {
-    SizeVector resultIndexes;
-    const size_t keyLength = keyBytes.size();
-
-    size_t previousBufferIndex = 0;
-    for (size_t bufferIndex = range.begin; bufferIndex < range.end;)
+    SizeVector result;
+    auto currentIndex = buffer + range.begin;
+    const auto bufferEnd   = buffer + range.end + 1;
+    while (true)
     {
-        size_t keyIndex = 0;
-        size_t foundStringLength = 0;
-        size_t indexOfFirstKeyLetter = bufferIndex;
-        while (keyIndex < keyLength &&
-               bufferIndex < range.end &&
-               buffer[bufferIndex] == keyBytes[keyIndex])
-        {
-            ++foundStringLength;
-            ++bufferIndex;
-            ++keyIndex;
-        }
-        if (foundStringLength == keyLength)
-            resultIndexes.push_back(indexOfFirstKeyLetter);
-
-        if (bufferIndex == previousBufferIndex)
-            ++bufferIndex;
-
-        previousBufferIndex = bufferIndex;
+        const auto foundIndex = std::search(currentIndex, bufferEnd, std::begin(keyBytes), std::end(keyBytes));
+        if (foundIndex == bufferEnd)
+            break;
+        result.push_back(static_cast<size_t>(foundIndex - buffer));
+        currentIndex = foundIndex + 1;
     }
-    return resultIndexes;
+    return result;
 }
 
 size_t HexKeyFinder::FindFirst(const uint8_t* buffer, Range range, std::string hexKeyValue)
@@ -113,7 +97,6 @@ size_t HexKeyFinder::FindLast(const uint8_t* buffer, Range range, std::string he
 
     StringVector tokens;
     split(tokens, hexKeyValue, boost::algorithm::is_any_of(" "));
-
 
     return FindLastForBytesKey(buffer, range, GetHexBytesFromStringVector(tokens));
 }

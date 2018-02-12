@@ -5,17 +5,8 @@ namespace dump
 
 Dumper::Dumper(DumperSettings settings)
 {
-    SetSettings(std::move(settings));
-    ClearLine();
-}
-
-void Dumper::SetSettings(DumperSettings settings)
-{
     m_settings = std::move(settings);
-
-//    m_rangeHKeys.from.value = m_settings.hkeyFrom;
-//    m_rangeHKeys.till.value = m_settings.hkeyTill;
-
+    ClearLine();
 }
 
 void Dumper::ClearLine()
@@ -63,7 +54,7 @@ void Dumper::GenerateImpl(uint8_t* buffer)
 
         charIsVisible = IsCharVisible(buffer, index);
 
-        if (IsNextWordStart(index, charIsVisible) && m_settings.useNewLine)
+        if (IsNextWordStart(index, charIsVisible) || IsBreakPosition(index))
             PrintLineAndIntend(index);
 
         const auto currentByte = buffer[index];
@@ -122,24 +113,29 @@ uint8_t* Dumper::FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_
     if (m_settings.useRelativeAddress)
         buffer = ShiftBeginOfBufferAndResults(buffer, m_settings);
 
+
     // add --from and --till
     AddKeyInVector(m_settings.hkeyFrom, m_keys);
     AddKeyInVector(m_settings.hkeyTill, m_keys);
 
-    //add keys
+    // add --hbreak
+    if (!m_settings.hkeyBreak.empty())
+    {
+        m_hkeyBreakIndex = m_keys.size();
+        AddKeyInVector(m_settings.hkeyBreak, m_keys);
+    }
+
+    //add --keys
     for (const auto& keyValue : m_settings.keyValues)
         m_keys.push_back(std::make_shared<finder::Key>(m_keys.size(), keyValue, std::make_shared<finder::KeyFinder>()));
 
-    // add hex keys
+    // add -- hkeys
     for (const auto& hkeyValue : m_settings.hkeyValues)
         AddKeyInVector(hkeyValue, m_keys);
 
-    // search // TODO for :
-    for (size_t index = 0; index < m_keys.size(); ++index)
-    {
-        auto key = m_keys[index];
+    // search for all keys
+    for (auto& key : m_keys)
         key->results = key->Find(buffer, m_settings.range, *key);
-    }
 
     return buffer;
 }
@@ -302,6 +298,9 @@ bool Dumper::IsEndOfCurrentLine(size_t index) const
 
 bool Dumper::IsNextWordStart(size_t index, const IsVisible& isVisible) const
 {
+    if (!m_settings.useNewLine)
+        return false;
+
     return (index != 0) && isVisible.current &&
             ((!m_settings.useWideChar && !isVisible.previous) ||
               (m_settings.useWideChar && !isVisible.previous && !isVisible.preprevious));
@@ -438,6 +437,14 @@ void Dumper::PrintAndClearLine(const bool isNewGroupAfterSkippedLines)
     m_ctx.Print(m_settings.isShow, m_settings.isArray);
 
     ClearLine();
+}
+
+bool Dumper::IsBreakPosition(const size_t index)
+{
+    if (m_settings.hkeyBreak.empty())
+        return false;
+    const auto& hkeyBreakResults = m_keys[m_hkeyBreakIndex]->results;
+    return std::find(std::begin(hkeyBreakResults), std::end(hkeyBreakResults), index) != hkeyBreakResults.end();
 }
 
 void Dumper::Ctx::Print(const DumperSettings::IsShow& isShow, bool isArray)

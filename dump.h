@@ -43,8 +43,6 @@ public:
 
     void Generate(void* bufferVoid, size_t bufferLength);
 
-    void SetSettings(DumperSettings settings);
-
     DumperSettings m_settings;
 
 private:
@@ -63,6 +61,7 @@ private:
 //    finder::RangeKeys m_rangeHKeys;
 
     finder::SharedKeysVector m_keys = {};
+    size_t m_hkeyBreakIndex = 0;
 
 private:
 
@@ -101,6 +100,8 @@ private:
     uint8_t* FindKeysAndShiftStartOfBuffer(size_t bufferLength, uint8_t* buffer);
 
     void AddKeyInVector(const std::string& keyValue, finder::SharedKeysVector& keysVector) const;
+
+    bool IsBreakPosition(const size_t index);
 };
 
 }; // namespace dump

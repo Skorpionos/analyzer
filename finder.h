@@ -17,10 +17,10 @@ struct Key;
 class Finder
 {
 public:
+    virtual ~Finder() = default;
     virtual SizeVector Find(const uint8_t* buffer, Range range, Key& key) = 0;
 
     Range FindRange(uint8_t* buffer, Range range, const std::string& hexFromValue, const std::string& hexTillValue);
-
 
 protected:
     virtual size_t FindFirst(const uint8_t* buffer, Range range, std::string hexKeyValue) = 0;
@@ -37,8 +37,8 @@ class KeyFinder : public Finder
 {
 public:
     SizeVector Find(const uint8_t* buffer, Range range, Key& key) override;
-    size_t FindFirst(const uint8_t* buffer, Range range, std::string hexKeyValue) override {};
-    size_t FindLast(const uint8_t* buffer, Range range, std::string hexKeyValue) override {};
+    size_t FindFirst(const uint8_t* /*buffer*/, Range /*range*/, std::string /*hexKeyValue*/) override {return 0;};
+    size_t FindLast(const uint8_t* /*buffer*/, Range /*range*/, std::string /*hexKeyValue*/) override {return 0;};
 };
 
 class HexKeyFinder : public Finder

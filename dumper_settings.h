@@ -52,7 +52,7 @@ struct DumperSettings
     size_t countBytesAfterKey   = defaultvalues::BytesCountAfterKey;
     size_t columnCount          = defaultvalues::ColumnCountDefault;
     size_t bytesInGroup         = defaultvalues::BytesCountInGroup;
-    size_t bytesInLine= columnCount * bytesInGroup;
+    size_t bytesInLine = columnCount * bytesInGroup;
 
     bool isArray = false;
     bool useNewLine = false;
@@ -64,6 +64,8 @@ struct DumperSettings
 
     std::string hkeyFrom;
     std::string hkeyTill;
+
+    std::string hkeyBreak;
 
     StringVector hkeyValues;
     StringVector keyValues;

@@ -7,13 +7,23 @@ filter
 ======
 filter for ip.addr, ip.src, ip.dst
 
+output
+======
+--break = newline for key. Realize correct shift.
+--start, --finish: range for key
+
+files
+=====
+--get all files in directory
+
 search
 =======
-case
+--case: ignore
 wide char search
 extract whole words
-shift search (+ cycle)
-xor search (+ cycle)
+ift search + cycle (--akey, --add,  --acycle, --azignor)
+xor search + cycle (--xkey, --mask, --xcycle, --xzignor)
+n same symbols (--hsame="91", nsame=4)
 
 heuristic
 =========
