@@ -46,7 +46,7 @@ void Dumper::GenerateImpl(uint8_t* buffer)
 
     for (size_t index = m_settings.range.begin; index <= m_settings.range.end; ++index)
     {
-        if (PositionInLine(index) == 0)
+        if (PositionInLine(index - m_ctx.deltaIndex) == 0)
         {
             m_ctx.range.begin = index;
             m_ctx.line.offset.append(GetOffset(index));
@@ -54,7 +54,7 @@ void Dumper::GenerateImpl(uint8_t* buffer)
 
         charIsVisible = IsCharVisible(buffer, index);
 
-        if (IsNextWordStart(index, charIsVisible) || IsBreakPosition(index))
+        if (IsNextWordStart(index, charIsVisible) || CheckBreakPosition(index))
             PrintLineAndIntend(index);
 
         const auto currentByte = buffer[index];
@@ -65,9 +65,17 @@ void Dumper::GenerateImpl(uint8_t* buffer)
 
         AppendCurrentAsciiLine(currentByte, index, charIsVisible, currentColor);
 
-        m_ctx.range.end = index;
+        PrintLineIfEndOfLine(index);
+    }
+    if (m_settings.isArray)
+        std::cout << "};\n";
+}
 
-        if (IsEndOfCurrentLine(index))
+void Dumper::PrintLineIfEndOfLine(size_t index)
+{
+    m_ctx.range.end = index;
+
+    if (IsEndOfCurrentLine(index))
         {
             CompleteCurrentDumpLine();
 
@@ -86,9 +94,6 @@ void Dumper::GenerateImpl(uint8_t* buffer)
 
             m_ctx.previousLineWasSkipped = currentLineIsSkipped;
         }
-    }
-    if (m_settings.isArray)
-        std::cout << "};\n";
 }
 
 uint8_t* Dumper::FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_t* buffer)
@@ -112,7 +117,6 @@ uint8_t* Dumper::FindKeysAndShiftStartOfBuffer(const size_t bufferLength, uint8_
 
     if (m_settings.useRelativeAddress)
         buffer = ShiftBeginOfBufferAndResults(buffer, m_settings);
-
 
     // add --from and --till
     AddKeyInVector(m_settings.hkeyFrom, m_keys);
@@ -239,11 +243,13 @@ void Dumper::AppendCurrentDumpLine(uint8_t dumpByte, const size_t index, utiliti
 
     m_ctx.line.dump.append(" ");
 
-    if (IsPositionLastInColumn(index) && m_settings.isSpaceBetweenDumpBytes)
+    auto relativeIndex = m_settings.useSeparateAddress ? index - m_ctx.deltaIndex : index;
+
+    if (IsPositionLastInColumn(relativeIndex) && m_settings.isSpaceBetweenDumpBytes)
         m_ctx.line.dump.append(" ");
 
-    if (index == m_settings.range.end)
-        m_ctx.line.dump.append(GetSpacesForRestOfDumpLine(PositionInLine(index)));
+    if (relativeIndex == m_settings.range.end)
+        m_ctx.line.dump.append(GetSpacesForRestOfDumpLine(PositionInLine(relativeIndex)));
 }
 
 void Dumper::AppendCurrentAsciiLine(uint8_t dumpByte, size_t index, const IsVisible& isVisible, utilities::Color currentColor)
@@ -293,7 +299,8 @@ void Dumper::PrintLineAndIntend(size_t index)
 
 bool Dumper::IsEndOfCurrentLine(size_t index) const
 {
-    return (PositionInLine(index) == m_settings.bytesInLine - 1) || (index == m_settings.range.end);
+    auto relativeIndex = m_settings.useSeparateAddress ? index - m_ctx.deltaIndex : index;
+    return (PositionInLine(relativeIndex) == m_settings.bytesInLine - 1) || (index == m_settings.range.end);
 }
 
 bool Dumper::IsNextWordStart(size_t index, const IsVisible& isVisible) const
@@ -389,20 +396,23 @@ std::string Dumper::GetSpacesForRestOfDumpLine(const size_t positionInLine) cons
 }
 
 
-std::string Dumper::GetOffset(size_t i) const
+std::string Dumper::GetOffset(size_t index) const
 {
+    if (m_settings.useSeparateAddress)
+        index -= m_ctx.deltaIndex;
+
     std::string result;
 
     if (m_settings.offset == OffsetTypes::Dec || m_settings.offset == OffsetTypes::Both)
     {
         if (m_settings.shift)
-            result += (boost::format("%5d") % i).str();
+            result += (boost::format("%5d") % index).str();
 
         if (m_settings.shift && m_settings.isShowDetail)
             result += "/";
 
         if (m_settings.isShowDetail || !m_settings.shift)
-            result += (boost::format("%5d") % (m_settings.shift + i)).str();
+            result += (boost::format("%5d") % (m_settings.shift + index)).str();
     }
 
     if (m_settings.offset == OffsetTypes::Both)
@@ -411,13 +421,13 @@ std::string Dumper::GetOffset(size_t i) const
     if (m_settings.offset == OffsetTypes::Hex || m_settings.offset == OffsetTypes::Both)
     {
         if (m_settings.shift)
-            result += (boost::format("0x%04x") % (i)).str();
+            result += (boost::format("0x%04x") % (index)).str();
 
         if (m_settings.shift && m_settings.isShowDetail)
             result += "/";
 
         if (m_settings.isShowDetail || !m_settings.shift)
-            result += (boost::format("0x%04x") % (m_settings.shift + i)).str();
+            result += (boost::format("0x%04x") % (m_settings.shift + index)).str();
     }
 
     if (m_settings.offset != OffsetTypes::None)
@@ -439,12 +449,15 @@ void Dumper::PrintAndClearLine(const bool isNewGroupAfterSkippedLines)
     ClearLine();
 }
 
-bool Dumper::IsBreakPosition(const size_t index)
+bool Dumper::CheckBreakPosition(const size_t index)
 {
     if (m_settings.hkeyBreak.empty())
         return false;
     const auto& hkeyBreakResults = m_keys[m_hkeyBreakIndex]->results;
-    return std::find(std::begin(hkeyBreakResults), std::end(hkeyBreakResults), index) != hkeyBreakResults.end();
+    bool result = std::find(std::begin(hkeyBreakResults), std::end(hkeyBreakResults), index) != hkeyBreakResults.end();
+    if (result)
+        m_ctx.deltaIndex = index;
+    return result;
 }
 
 void Dumper::Ctx::Print(const DumperSettings::IsShow& isShow, bool isArray)

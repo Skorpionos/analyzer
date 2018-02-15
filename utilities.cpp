@@ -57,5 +57,4 @@ void PrintFoundKeyResults(const finder::SharedKey& key, const bool useDetailedIn
 }
 
 
-
 } // utilities

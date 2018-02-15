@@ -52,6 +52,7 @@ private:
         Range range = {0, 0};
         bool previousLineWasSkipped = false;
         size_t skipLinesCount = 0;
+        size_t deltaIndex = 0;
 
         void Print(const DumperSettings::IsShow& isShow, bool isArray);
     };
@@ -80,7 +81,7 @@ private:
     void AppendCurrentDumpLine(uint8_t dumpByte, size_t index, utilities::Color currentColor);
     void AppendCurrentAsciiLine(uint8_t dumpByte, size_t index, const IsVisible& isVisible,
                                     utilities::Color currentColor);
-    std::string GetOffset(size_t i) const;
+    std::string GetOffset(const size_t index) const;
 
     std::string GetDumpValueSymbol(uint8_t value) const;
 
@@ -101,7 +102,9 @@ private:
 
     void AddKeyInVector(const std::string& keyValue, finder::SharedKeysVector& keysVector) const;
 
-    bool IsBreakPosition(const size_t index);
+    bool CheckBreakPosition(const size_t index);
+
+    void PrintLineIfEndOfLine(size_t index);
 };
 
 }; // namespace dump

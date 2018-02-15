@@ -59,6 +59,7 @@ struct DumperSettings
     bool useWideChar = false;
     bool ladder = false;
     bool useRelativeAddress = false;
+    bool useSeparateAddress = false;
     bool skipTextWithoutKeys = false;
     bool isShowEmptyLines = true;
 
