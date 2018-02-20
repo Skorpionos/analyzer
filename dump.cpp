@@ -46,16 +46,27 @@ void Dumper::GenerateImpl(uint8_t* buffer)
 
     for (size_t index = m_settings.range.begin; index <= m_settings.range.end; ++index)
     {
-        if (PositionInLine(index - m_ctx.deltaIndex) == 0)
+        if (PositionInLine(index) == 0)
         {
-            m_ctx.range.begin = index;
+            m_ctx.lineRange.begin = index;
             m_ctx.line.offset.append(GetOffset(index));
         }
 
         charIsVisible = IsCharVisible(buffer, index);
 
-        if (IsNextWordStart(index, charIsVisible) || CheckBreakPosition(index))
-            PrintLineAndIntend(index);
+        if (IsNextWordStart(index, charIsVisible))
+        {
+            if (PositionInLine(index) != 0)
+                PrintLineAndIntend(index);
+        }
+
+        if (CheckBreakPosition(index))
+        {
+            if (PositionInLine(index) != 0)
+                PrintLineAndIntend(index);
+            m_ctx.deltaIndex = index;
+            m_ctx.line.offset = GetOffset(index);
+        }
 
         const auto currentByte = buffer[index];
         
@@ -73,13 +84,11 @@ void Dumper::GenerateImpl(uint8_t* buffer)
 
 void Dumper::PrintLineIfEndOfLine(size_t index)
 {
-    m_ctx.range.end = index;
+    m_ctx.lineRange.end = index;
 
     if (IsEndOfCurrentLine(index))
         {
-            CompleteCurrentDumpLine();
-
-            bool currentLineIsSkipped = IsLineSkipped(m_ctx.range);
+            bool currentLineIsSkipped = IsLineSkipped(m_ctx.lineRange);
             bool isNewGroupAfterSkippedLines = !currentLineIsSkipped && m_ctx.previousLineWasSkipped;
 
             if (!currentLineIsSkipped)
@@ -186,28 +195,11 @@ bool Dumper::IsLineNearKeys(const Range& range, size_t position, size_t keySize)
 
 uint8_t* Dumper::ShiftBeginOfBufferAndResults(uint8_t* buffer, DumperSettings& settings) // TODO only range and shift
 {
-//    if (!m_rangeHKeys.from.results.empty())
-//    {
-//        const auto shift = m_rangeHKeys.from.results.front();
-//        for (auto& index : m_rangeHKeys.from.results)
-//            index -= shift;
-//        for (auto& index : m_rangeHKeys.till.results)
-//            index -= shift;
-//    }
-//
-//    settings.shift = settings.range.begin;
-
     settings.shift = settings.range.begin;
     settings.range.begin = 0;
     settings.range.end -= settings.shift;
 
     return buffer + settings.shift;
-}
-
-void Dumper::CompleteCurrentDumpLine()
-{
-    if (!m_settings.ladder)
-        m_ctx.line.dump.append(m_ctx.line.indent);
 }
 
 void Dumper::PrepareFirstLine(size_t index) // Actual for --shift=true
@@ -243,13 +235,11 @@ void Dumper::AppendCurrentDumpLine(uint8_t dumpByte, const size_t index, utiliti
 
     m_ctx.line.dump.append(" ");
 
-    auto relativeIndex = m_settings.useSeparateAddress ? index - m_ctx.deltaIndex : index;
-
-    if (IsPositionLastInColumn(relativeIndex) && m_settings.isSpaceBetweenDumpBytes)
+    if (IsPositionLastInColumn(index) && m_settings.isSpaceBetweenDumpBytes)
         m_ctx.line.dump.append(" ");
 
-    if (relativeIndex == m_settings.range.end)
-        m_ctx.line.dump.append(GetSpacesForRestOfDumpLine(PositionInLine(relativeIndex)));
+    if (index == m_settings.range.end)
+        m_ctx.line.dump.append(GetSpacesForRestOfDumpLine(PositionInLine(index)));
 }
 
 void Dumper::AppendCurrentAsciiLine(uint8_t dumpByte, size_t index, const IsVisible& isVisible, utilities::Color currentColor)
@@ -288,7 +278,10 @@ void Dumper::PrintLineAndIntend(size_t index)
 {
     m_ctx.line.dump.append(GetSpacesForRestOfDumpLine(PositionInLine(index - 1)));
     if (!m_settings.ladder)
-        m_ctx.line.dump.append(m_ctx.line.indent);
+    {
+        // TODO ladder
+//        m_ctx.line.dump.append(m_ctx.line.indent);
+    }
     PrintAndClearLine(false);
 
     m_ctx.line.offset = GetOffset(index);
@@ -299,8 +292,7 @@ void Dumper::PrintLineAndIntend(size_t index)
 
 bool Dumper::IsEndOfCurrentLine(size_t index) const
 {
-    auto relativeIndex = m_settings.useSeparateAddress ? index - m_ctx.deltaIndex : index;
-    return (PositionInLine(relativeIndex) == m_settings.bytesInLine - 1) || (index == m_settings.range.end);
+    return (PositionInLine(index) == m_settings.bytesInLine - 1) || (index == m_settings.range.end);
 }
 
 bool Dumper::IsNextWordStart(size_t index, const IsVisible& isVisible) const
@@ -339,14 +331,19 @@ std::string Dumper::GetDumpValueSymbol(uint8_t value) const
     return dumpValueStr;
 }
 
-size_t Dumper::PositionInLine(size_t index) const
+size_t Dumper::PositionInLine(const size_t index) const
 {
-    return index % m_settings.bytesInLine;
+    return GetRelativeIndex(index) % m_settings.bytesInLine;
 }
 
-bool Dumper::IsPositionLastInColumn(size_t index) const
+size_t Dumper::GetRelativeIndex(const size_t index) const
 {
-    return index % m_settings.bytesInGroup == m_settings.bytesInGroup - 1;
+    return !m_settings.hkeyBreak.empty() ? (index - m_ctx.deltaIndex) : index;
+}
+
+bool Dumper::IsPositionLastInColumn(const size_t index) const
+{
+    return GetRelativeIndex(index) % m_settings.bytesInGroup == m_settings.bytesInGroup - 1;
 }
 
 std::string Dumper::GetSpacesForBeginOfDumpLine(const size_t positionInLine) const
@@ -398,7 +395,7 @@ std::string Dumper::GetSpacesForRestOfDumpLine(const size_t positionInLine) cons
 
 std::string Dumper::GetOffset(size_t index) const
 {
-    if (m_settings.useSeparateAddress)
+    if (m_settings.useSplitAddress)
         index -= m_ctx.deltaIndex;
 
     std::string result;
@@ -442,7 +439,7 @@ void Dumper::PrintAndClearLine(const bool isNewGroupAfterSkippedLines)
     if (isNewGroupAfterSkippedLines)
         utilities::PrintEmptyLine(m_settings.isShowEmptyLines, m_ctx.skipLinesCount);
 
-    m_ctx.line.debug = "<" + std::to_string(m_ctx.range.begin) + "..." + std::to_string(m_ctx.range.end) + "> ";
+    m_ctx.line.debug = "<" + std::to_string(m_ctx.lineRange.begin) + "..." + std::to_string(m_ctx.lineRange.end) + "> ";
 
     m_ctx.Print(m_settings.isShow, m_settings.isArray);
 
@@ -455,8 +452,7 @@ bool Dumper::CheckBreakPosition(const size_t index)
         return false;
     const auto& hkeyBreakResults = m_keys[m_hkeyBreakIndex]->results;
     bool result = std::find(std::begin(hkeyBreakResults), std::end(hkeyBreakResults), index) != hkeyBreakResults.end();
-    if (result)
-        m_ctx.deltaIndex = index;
+
     return result;
 }
 

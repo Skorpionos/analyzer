@@ -14,7 +14,7 @@ bool ReadOptions(int argc, const char* const* argv, std::string& fileName, dump:
         ("begin",     po::value(&settings.range.begin),              "begin")
         ("end",       po::value(&settings.range.end),                "end")
         ("size",      po::value(&bufferSize),                        "count of bytes from begin")
-        ("group",     po::value(&settings.columnCount),              "number of groups")
+        ("group",     po::value(&settings.groupCount),               "number of groups")
         ("bytes",     po::value(&settings.bytesInGroup),             "number of bytes in one group")
         ("offset",    po::value(&addressType),                       "offset format (hex, dec, both, none)")
         ("detail",    po::value(&settings.isShowDetail),             "detailed format for offset (actual for --shift=true)")
@@ -31,7 +31,7 @@ bool ReadOptions(int argc, const char* const* argv, std::string& fileName, dump:
         ("ladder",    po::value(&settings.ladder),                   "use intend for separate words")
         ("newline",   po::value(&settings.useNewLine),               "every visible word starts with new line")
         ("shift",     po::value(&settings.useRelativeAddress),       "choose true for use --begin as offset=0")
-        ("separate",  po::value(&settings.useSeparateAddress),       "separate as offset=0")
+        ("split",     po::value(&settings.useSplitAddress),          "split bytes (address from 0) using --hbreak")
         ("key",       po::value<StringVector>(&settings.keyValues)->multitoken(),
                                                                      "find key(s) (string value)")
         ("hkey",      po::value<StringVector>(&settings.hkeyValues)->multitoken(),
@@ -71,7 +71,7 @@ bool ReadOptions(int argc, const char* const* argv, std::string& fileName, dump:
 
         fileName = argv[1];
 
-        settings.bytesInLine = settings.columnCount * settings.bytesInGroup;
+        settings.bytesInLine = settings.groupCount * settings.bytesInGroup;
     }
 
     catch (...)

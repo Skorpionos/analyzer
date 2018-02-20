@@ -4,7 +4,7 @@
 
 namespace dump::defaultvalues
 {
-constexpr size_t ColumnCountDefault  = 6;
+constexpr size_t GroupCountDefault  = 6;
 constexpr size_t BytesCountInGroup   = 8;
 constexpr size_t BytesCountBeforeKey = 0;
 constexpr size_t BytesCountAfterKey  = 96;
@@ -50,16 +50,16 @@ struct DumperSettings
 
     size_t countBytesBeforeKey  = defaultvalues::BytesCountBeforeKey;
     size_t countBytesAfterKey   = defaultvalues::BytesCountAfterKey;
-    size_t columnCount          = defaultvalues::ColumnCountDefault;
+    size_t groupCount           = defaultvalues::GroupCountDefault;
     size_t bytesInGroup         = defaultvalues::BytesCountInGroup;
-    size_t bytesInLine = columnCount * bytesInGroup;
+    size_t bytesInLine = groupCount * bytesInGroup;
 
     bool isArray = false;
     bool useNewLine = false;
     bool useWideChar = false;
     bool ladder = false;
     bool useRelativeAddress = false;
-    bool useSeparateAddress = false;
+    bool useSplitAddress = false;
     bool skipTextWithoutKeys = false;
     bool isShowEmptyLines = true;
 
