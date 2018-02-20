@@ -49,7 +49,7 @@ private:
     struct Ctx
     {
         Line line {};
-        Range range = {0, 0};
+        Range lineRange = {0, 0};
         bool previousLineWasSkipped = false;
         size_t skipLinesCount = 0;
         size_t deltaIndex = 0;
@@ -58,8 +58,6 @@ private:
     };
 
     Ctx m_ctx;
-
-//    finder::RangeKeys m_rangeHKeys;
 
     finder::SharedKeysVector m_keys = {};
     size_t m_hkeyBreakIndex = 0;
@@ -72,16 +70,13 @@ private:
     void PrepareFirstLine(size_t index);
     void PrintLineAndIntend(size_t index);
     void PrintAndClearLine(bool isNewGroupAfterSkippedLines);
-    void CompleteCurrentDumpLine();
 
     std::string GetSpacesForBeginOfDumpLine (size_t positionInLine) const;
-
     std::string GetSpacesForBeginOfAsciiLine(size_t positionInLine);
     std::string GetSpacesForRestOfDumpLine  (size_t positionInLine) const;
     void AppendCurrentDumpLine(uint8_t dumpByte, size_t index, utilities::Color currentColor);
-    void AppendCurrentAsciiLine(uint8_t dumpByte, size_t index, const IsVisible& isVisible,
-                                    utilities::Color currentColor);
-    std::string GetOffset(const size_t index) const;
+    void AppendCurrentAsciiLine(uint8_t dumpByte, size_t index, const IsVisible& isVisible, utilities::Color currentColor);
+    std::string GetOffset(size_t index) const;
 
     std::string GetDumpValueSymbol(uint8_t value) const;
 
@@ -91,6 +86,7 @@ private:
 
     bool IsPositionLastInColumn(size_t index) const;
     bool IsEndOfCurrentLine(size_t index) const;
+
     uint8_t* ShiftBeginOfBufferAndResults(uint8_t* buffer, DumperSettings& settings);
 
     utilities::Color GetColor(size_t index, uint8_t currentValue) const;
@@ -102,9 +98,13 @@ private:
 
     void AddKeyInVector(const std::string& keyValue, finder::SharedKeysVector& keysVector) const;
 
-    bool CheckBreakPosition(const size_t index);
+    bool CheckBreakPosition(size_t index);
 
     void PrintLineIfEndOfLine(size_t index);
+
+    size_t GetRelativeIndex(size_t index) const;
+
+//    void SolveLengthsOfLine(DumperSettings& settings);
 };
 
 }; // namespace dump
